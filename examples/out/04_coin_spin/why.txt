@@ -1,12 +1,14 @@
 a cute gold coin with a smile, spinning
 
 body               body/round (the coin)
+material           metal (a coin is made of it)
 colour             "gold coin"
 eyes               eyes/shine
 mouth              mouth/smile
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
 body               body/round (scored best for the profile; every sprite has a body)
 palette            palette/hue_shift (scored best for the profile; every sprite has colours)
-shading            shading/top_light (scored best for the profile; every sprite is shaded somehow)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
 outline            outline/colored (scored best for the profile; every sprite has an edge)
 eyes               eyes/shine (scored best for the profile; a smile)
 mouth              mouth/smile ("a smile"; a smile)

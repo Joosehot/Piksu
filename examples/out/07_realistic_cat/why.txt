@@ -1,0 +1,17 @@
+a large realistic orange cat with a tail, idle
+
+body               body/round (the cat)
+material           fur (a cat is made of it)
+colour             "orange cat"
+tail               "tail"
+eyes               eyes/angry
+mouth              mouth/none
+realism            realism/realistic ("realistic"; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/angry (scored best for the profile; a cat has a face)
+mouth              mouth/none (scored best for the profile; a cat has a face)
+timing             timing/eased (scored best for the profile; idle)
+animation idle     "idle"

@@ -23,7 +23,7 @@ Aras and Droid. No neural network runs at generation time.
 |---|---|---|
 | lexicon | `src/lexicon.rs` | a closed vocabulary; an unknown word is an error with a "did you mean" hint (`--lenient` skips it) |
 | parser | `src/parser.rs` | the sentence becomes a request: subject, size, colours, features, animations, frames, mood, style; each value keeps its words; an unused value is an error ("4 what?") |
-| rules | `src/rules/*.rs` | one decision per file with variants: body (round / tall / wide), palette (hue-shifted / value-only ramp), shading (flat / top light / rim), outline (dark / coloured / none), eyes (dot / shine / angry / sleepy / visor), mouth (none / smile / open / fangs), timing (linear / eased / snappy) |
+| rules | `src/rules/*.rs` | one decision per file with variants: realism (cartoon / stylized / realistic), body (round / tall / wide), palette (hue-shifted / value-only ramp), shading (flat / top light / rim / lit), outline (dark / coloured / none), eyes (dot / shine / angry / sleepy / visor), mouth (none / smile / open / fangs), timing (linear / eased / snappy) |
 | search | `src/search.rs` | beam search; a variant scores `weight * (1 + axes . (profile - 0.5))` on [cute, readable, detail]; words like "cute", "spooky", "simple", "detailed" shift the profile; judges score combinations (no outline on a tiny canvas, shiny eyes and a smile for "cute", ...) |
 | figure | `src/figure.rs` | the chosen design as coloured parts: body, eyes, mouth, and features (horns, ears, wings, crown, hat, antenna, tail, spots, stripes) |
 | animation | `src/anim.rs` | idle, bounce (squash and stretch), walk (legs), fly (wing flaps), spin, float, blink, hurt (flash and shake), as one seamless loop |
@@ -55,6 +55,10 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   of a guess.
 - **Sizes:** tiny, small, medium, big, large and huge, or "24x24" / "24 pixels".
 - **Style:** outlined, "no outline", flat or shaded. Mood words: cute, spooky, simple and detailed.
+- **Realism:** "cartoon" (flat colour, big eyes), "stylized" (directional light in several tones)
+  or "realistic" (light in five tones with dithered edges, material texture: fur, skin, metal
+  streaks, glowing gel, cloth, stone; smaller eyes; natural colours). Judges keep it honest:
+  realism wants directional light, a selective outline and at least 16 pixels.
 
 `piksu --vocabulary` lists every word.
 

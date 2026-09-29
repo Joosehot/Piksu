@@ -1,21 +1,25 @@
-a = #324b25
-b = #9ceb74
-c = #1d4018
-d = #14121a
-e = #f7f7f7
-f = #59c74d
-g = #378f48
-h = #122e17
+a = #45523b
+b = #344b28
+c = #d8ffb7
+d = #a3eb7e
+e = #142e19
+f = #14121a
+g = #f7f7f7
+h = #3e8f4e
+i = #1f401c
+j = #62c756
+k = #295f3c
+l = #0d1f13
 ---
 ............
 ............
 ............
 ............
-.....aa.....
-...aabbac...
-..abdeedfc..
-.abfeeeeggh.
-..afffgggh..
-...ccchhh...
+.....ab.....
+...aacdbe...
+..acfggfhe..
+.ijdggggkkl.
+..ihhkkkkl..
+...eellll...
 ............
 ............

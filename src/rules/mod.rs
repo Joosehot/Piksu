@@ -11,6 +11,7 @@ pub mod judges;
 pub mod mouth;
 pub mod outline;
 pub mod palette;
+pub mod realism;
 pub mod shading;
 pub mod timing;
 
@@ -48,7 +49,7 @@ pub trait Rule: Sync {
 }
 
 pub fn all() -> Vec<&'static dyn Rule> {
-    vec![&body::Body, &palette::Palette, &shading::Shading, &outline::Outline, &eyes::Eyes, &mouth::Mouth, &timing::Timing]
+    vec![&realism::Realism_, &body::Body, &palette::Palette, &shading::Shading, &outline::Outline, &eyes::Eyes, &mouth::Mouth, &timing::Timing]
 }
 
 pub fn profile(req: &Request, cfg: &Config) -> [f32; 3] {

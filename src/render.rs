@@ -48,7 +48,7 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
         let (bx0, by0, bx1, by1) = part.shade_box.unwrap_or_else(|| part.shape.bbox());
         let (mx, my, hx, hy) = ((bx0 + bx1) / 2.0, (by0 + by1) / 2.0, ((bx1 - bx0) / 2.0).max(1e-4), ((by1 - by0) / 2.0).max(1e-4));
         let mut painted = false;
-        let paint = |g: &mut Grid, x: u32, y: u32, q: (f32, f32)| {
+        let paint = |g: &mut Grid, x: u32, y: u32, q: (f32, f32)| -> bool {
             let k = (y * size + x) as usize;
             if let Some(c) = part.clip {
                 if g.role[k] != Some(c) {
@@ -60,6 +60,7 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
                 let (nx, ny) = ((q.0 - mx) / hx, (q.1 - my) / hy);
                 let diag = nx + ny;
                 match style.shading {
+                    "lit" => c = lit(fig, part.color, nx, ny, x, y, cfg),
                     "rim" => {
                         let r = (nx * nx + ny * ny).sqrt();
                         if r > sh.rim_band {
@@ -113,6 +114,55 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
         }
     }
     g
+}
+
+/// Deterministic noise in -1..1 for a pixel (texture must not change between runs).
+fn noise(x: u32, y: u32, seed: u32) -> f32 {
+    let mut h = x.wrapping_mul(374_761_393) ^ y.wrapping_mul(668_265_263) ^ seed.wrapping_mul(2_147_483_647);
+    h = (h ^ (h >> 13)).wrapping_mul(1_274_126_177);
+    h ^= h >> 16;
+    (h & 0xffff) as f32 / 32767.5 - 1.0
+}
+
+const BAYER: [[f32; 4]; 4] = [[0.0, 8.0, 2.0, 10.0], [12.0, 4.0, 14.0, 6.0], [3.0, 11.0, 1.0, 9.0], [15.0, 7.0, 13.0, 5.0]];
+
+/// Directional light on a rounded surface, in five tones, with material texture.
+/// `nx`, `ny` are the pixel's position in the part's own box (-1..1, y down).
+fn lit(fig: &Figure, base: Rgb, nx: f32, ny: f32, x: u32, y: u32, cfg: &Config) -> Rgb {
+    use crate::figure::Material;
+    let l = &cfg.lighting;
+    let len = (l.direction[0].powi(2) + l.direction[1].powi(2) + l.direction[2].powi(2)).sqrt();
+    let ld = [l.direction[0] / len, l.direction[1] / len, l.direction[2] / len];
+    // treat the part as a dome: the normal leans out towards the edge
+    let r2 = (nx * nx + ny * ny).min(1.0);
+    let n = [nx * 0.9, ny * 0.9, (1.0 - r2 * 0.81).max(0.0).sqrt()];
+    let mut i = l.ambient + (1.0 - l.ambient) * (n[0] * ld[0] + n[1] * ld[1] + n[2] * ld[2]).max(0.0);
+    let m = &cfg.materials;
+    let strength = match fig.realism {
+        "realistic" => 1.0,
+        "stylized" => 0.5,
+        _ => 0.0,
+    };
+    match fig.material {
+        Material::Fur => i += m.fur * strength * noise(x, y / 2, 1),
+        Material::Skin => i += m.skin * strength * noise(x / 2, y / 2, 2),
+        Material::Cloth => i += m.cloth * strength * noise(x, y / 3, 3),
+        Material::Stone => i += m.stone * strength * noise(x, y, 4),
+        Material::Gel => i += m.gel_core * strength * (1.0 - r2).max(0.0) + m.gel * strength * noise(x, y, 5),
+        Material::Metal => {
+            if nx > m.metal_band[0] && nx < m.metal_band[1] {
+                i += 0.25 * strength.max(0.5);
+            }
+            i += m.metal * strength * noise(x, y, 6);
+        }
+    }
+    // realistic sprites dither across each tone boundary; others cut clean
+    if fig.realism == "realistic" {
+        i += (BAYER[(y % 4) as usize][(x % 4) as usize] / 16.0 - 0.5) * l.dither;
+    }
+    let tones = fig.pal.tones_of(base, &cfg.realism);
+    let k = l.levels.iter().filter(|c| i > **c).count();
+    tones[k]
 }
 
 /// Screen point -> part space: undo the whole-sprite transform, then the group's.

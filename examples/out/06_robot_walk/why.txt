@@ -1,13 +1,15 @@
 a big blue robot with an antenna, walking
 
 body               body/round (the robot)
+material           metal (a robot is made of it)
 colour             "blue robot"
 antenna            "antenna"
 eyes               eyes/visor
 mouth              mouth/none
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
 body               body/round (scored best for the profile; every sprite has a body)
 palette            palette/hue_shift (scored best for the profile; every sprite has colours)
-shading            shading/top_light (scored best for the profile; every sprite is shaded somehow)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
 outline            outline/colored (scored best for the profile; every sprite has an edge)
 eyes               eyes/visor (scored best for the profile; a robot has a face)
 mouth              mouth/none (scored best for the profile; a robot has a face)

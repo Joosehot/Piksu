@@ -56,6 +56,7 @@ pub fn parse(sentence: &str, lenient: bool) -> Result<Request, Vec<Diag>> {
     let mut frames: Option<Val<u32>> = None;
     let mut mods: Vec<Val<Mod>> = Vec::new();
     let mut styles: Vec<Val<Style>> = Vec::new();
+    let mut realism: Option<Val<Realism>> = None;
 
     let mut pending_color: Option<(Color, Option<Tone>, String)> = None;
     let mut pending_tone: Option<(Tone, String)> = None;
@@ -102,6 +103,7 @@ pub fn parse(sentence: &str, lenient: bool) -> Result<Request, Vec<Diag>> {
                 }
             }
             Tok::Mod(m) => mods.push(Val::new(m, w)),
+            Tok::Realism(r) => realism = Some(Val::new(r, w)),
             Tok::Style(s) => {
                 if let Some(nw) = pending_no.take() {
                     match s {
@@ -146,7 +148,7 @@ pub fn parse(sentence: &str, lenient: bool) -> Result<Request, Vec<Diag>> {
     if !diags.is_empty() {
         return Err(diags);
     }
-    Ok(Request { sentence: sentence.trim().to_string(), subject, size, color, features, anims, frames, mods, styles })
+    Ok(Request { sentence: sentence.trim().to_string(), subject, size, color, features, anims, frames, mods, styles, realism })
 }
 
 #[cfg(test)]

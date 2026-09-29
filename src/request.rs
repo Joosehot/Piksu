@@ -29,6 +29,7 @@ kinds!(Feature {
 });
 kinds!(Anim { Idle = "idle", Bounce = "bounce", Walk = "walk", Fly = "fly", Spin = "spin", Float = "float", Blink = "blink", Hurt = "hurt" });
 kinds!(Mod { Cute = "cute", Spooky = "spooky", Simple = "simple", Detailed = "detailed" });
+kinds!(Realism { Cartoon = "cartoon", Stylized = "stylized", Realistic = "realistic" });
 kinds!(Style { Outlined = "outlined", NoOutline = "no outline", Flat = "flat", Shaded = "shaded" });
 
 #[derive(Clone, Debug, PartialEq)]
@@ -67,6 +68,7 @@ pub struct Request {
     pub frames: Option<Val<u32>>,
     pub mods: Vec<Val<Mod>>,
     pub styles: Vec<Val<Style>>,
+    pub realism: Option<Val<Realism>>,
 }
 
 impl Request {

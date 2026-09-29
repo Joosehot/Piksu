@@ -25,6 +25,9 @@ pub struct Config {
     pub features: BTreeMap<String, f32>,
     pub animations: BTreeMap<String, AnimCfg>,
     pub timing: Timing,
+    pub lighting: Lighting,
+    pub realism: RealismCfg,
+    pub materials: Materials,
     pub shading: Shading,
     pub checks: Checks,
     pub output: Output,
@@ -73,6 +76,7 @@ pub struct Thresholds {
     pub detail_min_size: u32,
     pub outline_min_size: u32,
     pub dot_eyes_max_size: u32,
+    pub realism_min_size: u32,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -138,6 +142,38 @@ pub struct Timing {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
+pub struct Lighting {
+    pub direction: [f32; 3],
+    pub ambient: f32,
+    pub levels: [f32; 4],
+    pub dither: f32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct RealismCfg {
+    pub eye_scale: BTreeMap<String, f32>,
+    pub saturation: BTreeMap<String, f32>,
+    pub deep_value: f32,
+    pub spec_value: f32,
+    pub spec_saturation: f32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct Materials {
+    pub fur: f32,
+    pub skin: f32,
+    pub metal: f32,
+    pub gel: f32,
+    pub cloth: f32,
+    pub stone: f32,
+    pub metal_band: [f32; 2],
+    pub gel_core: f32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Shading {
     pub shade_cut: f32,
     pub light_cut: f32,
@@ -171,6 +207,13 @@ pub const JUDGES: &[&str] = &[
     "spooky_needs_hard_face",
     "colored_outline_with_hue_shift",
     "dot_eyes_on_big_canvas",
+    "realistic_needs_lit",
+    "realistic_not_flat",
+    "cartoon_avoids_lit",
+    "realistic_small_canvas",
+    "realistic_no_shine_eyes",
+    "realistic_colored_outline",
+    "stylized_likes_lit",
 ];
 
 /// Feature and animation numbers the code reads.
@@ -245,6 +288,11 @@ impl Config {
             let c = self.animations.get(a.name()).ok_or_else(|| anyhow!("missing [animations.{}]", a.name()))?;
             if c.frames < 2 {
                 bail!("animations.{}.frames must be at least 2", a.name());
+            }
+        }
+        for r in Realism::ALL {
+            if !self.realism.eye_scale.contains_key(r.name()) || !self.realism.saturation.contains_key(r.name()) {
+                bail!("realism.eye_scale and realism.saturation need a value for {}", r.name());
             }
         }
         if self.sizes.min < 4 || self.sizes.max < self.sizes.min {

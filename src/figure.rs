@@ -97,11 +97,36 @@ pub struct Part {
     pub min_pixel: bool,
 }
 
+/// What a surface is made of, for realistic texture.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Material {
+    Fur,
+    Skin,
+    Metal,
+    Gel,
+    Cloth,
+    Stone,
+}
+
+pub fn material_of(s: Subject) -> Material {
+    match s {
+        Subject::Cat | Subject::Bat => Material::Fur,
+        Subject::Frog | Subject::Mushroom | Subject::Heart => Material::Skin,
+        Subject::Knight | Subject::Robot | Subject::Coin | Subject::Star => Material::Metal,
+        Subject::Slime | Subject::Potion => Material::Gel,
+        Subject::Ghost => Material::Cloth,
+        Subject::Gem => Material::Stone,
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Palette {
     pub main: Rgb,
     pub shade: Rgb,
     pub light: Rgb,
+    /// the deepest shadow and the specular highlight (lit shading)
+    pub deep: Rgb,
+    pub spec: Rgb,
     pub dark_outline: Rgb,
     pub eye_white: Rgb,
     pub eye_dark: Rgb,
@@ -118,6 +143,19 @@ impl Palette {
         } else {
             adjust(c, self.ramp[0].0, self.ramp[0].1, self.ramp[0].2)
         }
+    }
+    /// Five tones for lit shading: deep, shade, base, light, spec.
+    pub fn tones_of(&self, c: Rgb, rc: &crate::config::RealismCfg) -> [Rgb; 5] {
+        if c == self.main {
+            return [self.deep, self.shade, self.main, self.light, self.spec];
+        }
+        [
+            adjust(c, rc.deep_value, 1.0, self.ramp[0].2 * 1.5),
+            self.shade_of(c),
+            c,
+            self.light_of(c),
+            adjust(c, rc.spec_value, rc.spec_saturation, self.ramp[1].2 * 1.5),
+        ]
     }
     pub fn light_of(&self, c: Rgb) -> Rgb {
         if c == self.main {
@@ -141,6 +179,9 @@ pub struct Figure {
     pub has_legs: bool,
     pub has_wings: bool,
     pub has_eyes: bool,
+    pub material: Material,
+    /// cartoon / stylized / realistic
+    pub realism: &'static str,
     /// (piece, how it was decided) for why.txt
     pub why: Vec<(String, String)>,
 }
@@ -188,8 +229,10 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         _ => shapes.round,
     };
     let mut why = vec![("body".to_string(), format!("body/{variant} (the {})", req.subject.words))];
+    why.push(("material".to_string(), format!("{:?} (a {} is made of it)", material_of(subj), subj.name()).to_lowercase()));
 
     // ---- palette
+    let realism = chosen.get("realism").copied().unwrap_or("cartoon");
     let main = match &req.color {
         Some(c) => {
             why.push(("colour".into(), format!("\"{}\"", c.words)));
@@ -201,6 +244,8 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
             named(cfg, d)
         }
     };
+    // natural colours are less saturated
+    let main = adjust(main, 1.0, cfg.realism.saturation[realism], 0.0);
     let pr = &cfg.palette_rules;
     let hue = chosen.get("palette").copied() == Some("hue_shift");
     let ramp = [
@@ -211,6 +256,8 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         main,
         shade: adjust(main, ramp[0].0, ramp[0].1, ramp[0].2),
         light: adjust(main, ramp[1].0, ramp[1].1, ramp[1].2),
+        deep: adjust(main, cfg.realism.deep_value, 1.0, ramp[0].2 * 1.5),
+        spec: adjust(main, cfg.realism.spec_value, cfg.realism.spec_saturation, ramp[1].2 * 1.5),
         dark_outline: pr.dark_outline,
         eye_white: pr.eye_white,
         eye_dark: pr.eye_dark,
@@ -452,7 +499,9 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
     } else {
         1.0
     };
-    let r = cfg.shapes.eye_r * size_mul * k;
+    // realistic eyes are smaller, unless the sentence asked for big ones
+    let real_scale = if req.has(Feature::BigEyes).is_some() { 1.0 } else { cfg.realism.eye_scale[realism] };
+    let r = cfg.shapes.eye_r * size_mul * k * real_scale;
     let eye_variant = chosen.get("eyes").copied();
     let one = req.has(Feature::OneEye).is_some();
     let eye_xs: Vec<f32> = if one { vec![face.0] } else { vec![face.0 - cfg.shapes.eye_gap * k / 2.0, face.0 + cfg.shapes.eye_gap * k / 2.0] };
@@ -549,6 +598,8 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         has_legs,
         has_wings,
         has_eyes: eye_variant.is_some_and(|e| e != "visor"),
+        material: material_of(subj),
+        realism,
         why,
     })
 }

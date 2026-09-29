@@ -9,7 +9,7 @@ impl Rule for Shading {
         "shading"
     }
     fn all_variants(&self) -> &'static [&'static str] {
-        &["flat", "top_light", "rim"]
+        &["flat", "top_light", "rim", "lit"]
     }
     fn needed(&self, cx: &Ctx, chosen: &Chosen) -> Option<String> {
         let _ = (cx, chosen);
@@ -21,9 +21,9 @@ impl Rule for Shading {
             return Ok(vec![Offer::named("flat", s.words.clone())]);
         }
         if let Some(s) = cx.req.style(Style::Shaded) {
-            return Ok(vec![Offer::named("top_light", s.words.clone()), Offer::named("rim", s.words.clone())]);
+            return Ok(vec![Offer::named("top_light", s.words.clone()), Offer::named("rim", s.words.clone()), Offer::named("lit", s.words.clone())]);
         }
-        Ok(vec![Offer::plain("flat"), Offer::plain("top_light"), Offer::plain("rim")])
+        Ok(vec![Offer::plain("flat"), Offer::plain("top_light"), Offer::plain("rim"), Offer::plain("lit")])
     }
 }
 
@@ -39,7 +39,7 @@ mod tests {
 
     #[test]
     fn otherwise_all() {
-        assert_eq!(offers(&Shading, "a slime"), Some(vec!["flat", "top_light", "rim"]));
+        assert_eq!(offers(&Shading, "a slime"), Some(vec!["flat", "top_light", "rim", "lit"]));
     }
 
 }

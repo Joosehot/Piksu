@@ -1,0 +1,16 @@
+a large stylized green slime, bouncing
+
+body               body/round (the slime)
+material           gel (a slime is made of it)
+colour             "green slime"
+eyes               eyes/shine
+mouth              mouth/none
+realism            realism/stylized ("stylized"; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/shine (scored best for the profile; a slime has a face)
+mouth              mouth/none (scored best for the profile; a slime has a face)
+timing             timing/eased (scored best for the profile; bouncing)
+animation bounce   "bouncing"

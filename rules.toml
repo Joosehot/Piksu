@@ -29,6 +29,11 @@ min = 8
 max = 64
 
 # ---------------------------------------------------------------- variants
+[variants.realism]
+cartoon = { weight = 1.0, axes = [0.6, 0.3, -0.4] }
+stylized = { weight = 1.0, axes = [0.1, 0.2, 0.3] }
+realistic = { weight = 0.95, axes = [-0.6, -0.2, 0.9] }
+
 [variants.body]
 round = { weight = 1.0, axes = [0.5, 0.2, 0.0] }
 tall = { weight = 1.0, axes = [-0.2, 0.2, 0.2] }
@@ -42,6 +47,7 @@ value_only = { weight = 1.0, axes = [0.0, 0.3, -0.3] }
 flat = { weight = 1.0, axes = [0.1, 0.5, -0.6] }
 top_light = { weight = 1.05, axes = [0.2, 0.2, 0.3] }
 rim = { weight = 0.95, axes = [-0.1, 0.0, 0.6] }
+lit = { weight = 0.95, axes = [-0.3, 0.1, 0.7] }     # light from a direction, several tones
 
 [variants.outline]
 dark = { weight = 1.05, axes = [0.0, 0.7, 0.0] }
@@ -74,11 +80,19 @@ cute_needs_soft_face = 0.5       # shine eyes + a smile
 spooky_needs_hard_face = 0.5     # angry eyes or fangs
 colored_outline_with_hue_shift = 0.3
 dot_eyes_on_big_canvas = -0.5    # tiny eyes lost on a big sprite
+realistic_needs_lit = 1.4        # realism wants directional light with several tones
+realistic_not_flat = -1.5
+cartoon_avoids_lit = -0.6
+realistic_small_canvas = -1.2    # below `realism_min_size` pixels there's no room for realism
+realistic_no_shine_eyes = -0.9   # big glossy cartoon eyes (unless the sentence asks for big eyes)
+realistic_colored_outline = 0.5  # a selective outline instead of black
+stylized_likes_lit = 0.8         # stylized: light and shape, no texture
 
 [thresholds]
 detail_min_size = 16
 outline_min_size = 16
 dot_eyes_max_size = 24
+realism_min_size = 16
 
 # ---------------------------------------------------------------- palette
 [palette_rules]
@@ -286,6 +300,30 @@ shake = 0.05
 
 [timing]
 snappy_hold = 0.3      # fraction of the cycle held at each extreme
+
+[lighting]
+direction = [-0.55, -0.7, 0.45]   # towards the light: left, up, out of the screen
+ambient = 0.2
+levels = [0.3, 0.5, 0.72, 0.9]    # lit intensity cut-offs: deep | shade | main | light | spec
+dither = 0.12                     # realistic: ordered dither width around each cut-off
+
+[realism]
+eye_scale = { cartoon = 1.0, stylized = 0.85, realistic = 0.62 }
+saturation = { cartoon = 1.0, stylized = 0.92, realistic = 0.78 }
+deep_value = 0.48
+spec_value = 1.35
+spec_saturation = 0.5
+
+# texture strength per material (realistic only; stylized gets half)
+[materials]
+fur = 0.1
+skin = 0.07
+metal = 0.05
+gel = 0.05
+cloth = 0.06
+stone = 0.04
+metal_band = [-0.5, -0.22]        # metal: a bright vertical streak between these x positions (-1..1)
+gel_core = 0.12                   # gel: glow added in the middle
 
 [shading]
 shade_cut = 0.45       # top_light: (x + y) past this, in the part's own -1..1 box, is shade

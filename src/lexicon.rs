@@ -11,6 +11,7 @@ pub enum Tok {
     Anim(Anim),
     Mod(Mod),
     Style(Style),
+    Realism(Realism),
     /// "8x8", "16 pixels"
     Pixels(u32),
     /// a size word: tiny / small / medium / big / large / huge
@@ -149,6 +150,18 @@ fn table() -> Vec<(&'static str, Tok)> {
         ("detailed", T::Mod(Mod::Detailed)),
         ("fancy", T::Mod(Mod::Detailed)),
         ("intricate", T::Mod(Mod::Detailed)),
+        // realism
+        ("realistic", T::Realism(Realism::Realistic)),
+        ("lifelike", T::Realism(Realism::Realistic)),
+        ("natural", T::Realism(Realism::Realistic)),
+        ("photorealistic", T::Realism(Realism::Realistic)),
+        ("semi realistic", T::Realism(Realism::Stylized)),
+        ("stylized", T::Realism(Realism::Stylized)),
+        ("stylised", T::Realism(Realism::Stylized)),
+        ("cartoon", T::Realism(Realism::Cartoon)),
+        ("cartoony", T::Realism(Realism::Cartoon)),
+        ("toon", T::Realism(Realism::Cartoon)),
+        ("chibi", T::Realism(Realism::Cartoon)),
         // style
         ("outlined", T::Style(Style::Outlined)),
         ("outline", T::Style(Style::Outlined)),

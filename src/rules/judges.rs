@@ -25,6 +25,28 @@ pub fn score(cx: &Ctx, chosen: &Chosen) -> Vec<(f32, String)> {
     if cx.size > th.dot_eyes_max_size && is("eyes", "dot") {
         out.push((j("dot_eyes_on_big_canvas"), format!("dot eyes on a {}px canvas", cx.size)));
     }
+    let real = is("realism", "realistic");
+    if real && is("shading", "lit") {
+        out.push((j("realistic_needs_lit"), "directional light for realism".into()));
+    }
+    if real && is("shading", "flat") {
+        out.push((j("realistic_not_flat"), "flat colour can't look real".into()));
+    }
+    if is("realism", "cartoon") && is("shading", "lit") {
+        out.push((j("cartoon_avoids_lit"), "a cartoon lit like a photo".into()));
+    }
+    if real && cx.size < th.realism_min_size {
+        out.push((j("realistic_small_canvas"), format!("realism on a {}px canvas", cx.size)));
+    }
+    if real && is("eyes", "shine") && cx.req.has(Feature::BigEyes).is_none() {
+        out.push((j("realistic_no_shine_eyes"), "glossy cartoon eyes on a realistic sprite".into()));
+    }
+    if is("realism", "stylized") && is("shading", "lit") {
+        out.push((j("stylized_likes_lit"), "directional light for a stylized look".into()));
+    }
+    if real && is("outline", "colored") {
+        out.push((j("realistic_colored_outline"), "a selective outline for realism".into()));
+    }
     out
 }
 

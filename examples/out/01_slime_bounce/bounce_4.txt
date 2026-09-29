@@ -1,22 +1,26 @@
-a = #324b25
+a = #45523b
 b = #4f4f4f
-c = #1d4018
-d = #9ceb74
+c = #1f401c
+d = #d8ffb7
 e = #f7f7f7
-f = #59c74d
+f = #62c756
 g = #14121a
-h = #378f48
-i = #122e17
+h = #3e8f4e
+i = #142e19
+j = #344b28
+k = #a3eb7e
+l = #295f3c
+m = #0d1f13
 ---
 ............
 ............
 ....abbc....
 ...adeefc...
 ..adegeehi..
-..cfeeeehi..
-..cfffhhhi..
-...cchhii...
-.....ii.....
+..jkeeeelm..
+..ihhhlllm..
+...iillmm...
+.....mm.....
 ............
 ............
 ............
