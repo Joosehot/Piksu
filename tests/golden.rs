@@ -1,6 +1,7 @@
 //! The proof:
 //! 1. determinism: every example gives byte-identical files, run after run
 //! 2. stability: the output matches the checked-in golden (sheet.png, the Droid text frames, why.txt)
+//!
 //! Accept intended changes with `PIKSU_BLESS=1 cargo test`.
 
 use piksu::config::Config;

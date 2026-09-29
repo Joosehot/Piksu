@@ -148,6 +148,7 @@ heart = "red"
 potion = "pink"
 mushroom = "red"
 human = "skin"
+dog = "brown"
 
 # ---------------------------------------------------------------- shapes
 # body = [centre x, centre y, width, height] of the main body, per body variant.
@@ -346,6 +347,13 @@ leg = [0.06, 0.22]
 tail = [0.35, 0.05]      # length, thickness
 ear = [0.07, 0.08]
 
+[anatomy.dog]
+body = [0.42, 0.48, 0.5, 0.22]
+head = [0.8, 0.3, 0.2, 0.18]
+leg = [0.055, 0.28]
+tail = [0.26, 0.045]     # length, thickness
+ear = [0.08, 0.14]
+
 [anatomy.frog]
 body = [0.45, 0.6, 0.5, 0.32]
 head = [0.68, 0.52, 0.3, 0.24]
@@ -409,6 +417,7 @@ knight = "brown"
 robot = "teal"
 slime = "black"
 human = "brown"
+dog = "brown"
 
 # ---------------------------------------------------------------- characters
 # A name in a sentence stands for its description; the rest of the sentence still applies

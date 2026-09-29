@@ -131,7 +131,7 @@ pub enum Material {
 
 pub fn material_of(s: Subject) -> Material {
     match s {
-        Subject::Cat | Subject::Bat => Material::Fur,
+        Subject::Cat | Subject::Bat | Subject::Dog => Material::Fur,
         Subject::Frog | Subject::Mushroom | Subject::Heart => Material::Skin,
         Subject::Knight | Subject::Robot | Subject::Coin | Subject::Star => Material::Metal,
         Subject::Slime | Subject::Potion => Material::Gel,
@@ -324,7 +324,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
     }
 
     match subj {
-        Subject::Human => unreachable!("drawn by anatomy"),
+        Subject::Human | Subject::Dog => unreachable!("drawn by anatomy"),
         Subject::Slime => body!(Shape::Egg { cx, cy: top + 0.62 * h, rx: w / 2.0, ry_top: 0.62 * h, ry_bottom: 0.38 * h }),
         Subject::Ghost => {
             let r = w / 2.0;

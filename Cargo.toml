@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Piksu: describe a sprite in words, get deterministic pixel art and animation frames (a HotMotor engine)"
 license = "MIT"
+repository = "https://github.com/Joosehot/Piksu"
 publish = false
 
 [lib]

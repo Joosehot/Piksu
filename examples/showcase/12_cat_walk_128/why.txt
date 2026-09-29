@@ -1,0 +1,16 @@
+a cute orange cat, walking
+
+body               body/round (the cat)
+material           fur (a cat is made of it)
+colour             "orange cat"
+eyes               eyes/shine
+mouth              mouth/smile
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/shine (scored best for the profile; a cat has a face)
+mouth              mouth/smile (scored best for the profile; a cat has a face)
+timing             timing/eased (scored best for the profile; walking)
+animation walk     "walking"

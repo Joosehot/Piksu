@@ -5,6 +5,14 @@ prompting an image model, but it behaves like a compiler: the same sentence and 
 `rules.toml` always give the same pixels, every choice can be traced to the words that asked
 for it, and a sprite that fails its checks isn't written at all.
 
+![A cat, a dog, a slime and a knight at 128 x 128](examples/showcase/showcase.png)
+
+| `a cute orange cat, walking` | `a happy brown dog, walking` | `a cute green slime with big eyes, bouncing` | `a realistic knight, walking` |
+|---|---|---|---|
+| ![cat](examples/showcase/12_cat_walk_128.gif) | ![dog](examples/showcase/13_dog_walk_128.gif) | ![slime](examples/showcase/14_slime_bounce_128.gif) | ![knight](examples/showcase/15_knight_walk_128.gif) |
+
+All four are 128 x 128, the default size, shown here at 2x.
+
 ```
 $ piksu "a small green slime with big eyes, bouncing"
 a small green slime with big eyes, bouncing -> out/slime_bounce (12px, 8 frames)
@@ -49,7 +57,8 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   shirt, trousers, boots, belt, and a claw arm. Named characters live in rules.toml
   `[characters]`: `piksu "Winston Black, walking"`.
 
-- **Subjects:** slime, ghost, bat, cat, frog, knight, robot, coin, gem, star, heart, potion, mushroom.
+- **Subjects:** slime, ghost, bat, cat, dog, frog, knight, robot, coin, gem, star, heart, potion,
+  mushroom and human. A dog and a human are always drawn with real anatomy.
 - **Colours:** red, orange, yellow, green, blue, purple, pink, black, white, grey, brown, gold,
   silver and teal, each optionally light or dark. A colour before a feature colours that feature
   ("red eyes", "a gold crown").
@@ -94,6 +103,14 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   byte-identical and match `examples/out/` (`PIKSU_BLESS=1 cargo test` accepts intended changes);
   honest failures and a rules.toml typo are tested too
 
+## Install
+
+```
+git clone https://github.com/Joosehot/Piksu
+cd Piksu
+cargo run --release -- "a cute orange cat, walking"
+```
+
 ## License
 
-MIT.
+MIT, see [LICENSE](LICENSE).

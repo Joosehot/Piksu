@@ -1,0 +1,16 @@
+a happy brown dog, walking
+
+body               body/round (the dog)
+material           fur (a dog is made of it)
+colour             "brown dog"
+anatomy            a dog is always drawn with real anatomy
+anatomy            realistic dog (side view for animals, front for figures, three-quarter for objects)
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/shine (scored best for the profile; a dog has a face)
+mouth              mouth/smile ("happy"; a dog has a face)
+timing             timing/eased (scored best for the profile; walking)
+animation walk     "walking"

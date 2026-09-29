@@ -7,7 +7,7 @@
 use crate::color::{adjust, mix, Rgb};
 
 /// Subjects drawn only by anatomy, at every realism level (no cartoon blueprint in figure.rs).
-pub const ANATOMY_ONLY: &[Subject] = &[Subject::Human];
+pub const ANATOMY_ONLY: &[Subject] = &[Subject::Human, Subject::Dog];
 use crate::config::Config;
 use crate::figure::{material_of, Figure, Gait, Group, Palette, Part, Shape, Show};
 use crate::request::*;
@@ -148,6 +148,7 @@ pub const REQUIRED: &[(&str, &[&str])] = &[
     ("potion", &["body", "neck"]),
     ("mushroom", &["cap", "stem"]),
     ("human", &["body", "head", "leg", "arm"]),
+    ("dog", &["body", "head", "leg", "tail", "ear"]),
 ];
 
 /// A realistic eye: almond white, coloured iris, pupil (slit, round or wide), one catch-light.
@@ -247,6 +248,95 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
             }
             b.add("inner_ear", Group::Body, 5, Shape::Poly(vec![(hx - hw * 0.02 - ew * 0.25, hy - hh * 0.34), (hx - hw * 0.02 + ew * 0.25, hy - hh * 0.38), (hx - hw * 0.04, hy - hh * 0.36 - eh * 0.7)]), mix(color("pink"), main, 0.4));
             eye(&mut b, hx + hw * 0.18, hy - hh * 0.05, hh * 0.13, eye_col, "slit", main, angry, cfg);
+            has_eyes = true;
+            gait = Gait::Quadruped;
+        }
+        Subject::Dog => {
+            // side view, facing right: a deep chest and a tucked belly, a long muzzle with a black
+            // nose, drop ears, hind legs with a hock, a tail carried up
+            let bd = d("body");
+            let hd = d("head");
+            let (lw, ll) = (d("leg")[0], d("leg")[1]);
+            let (tl, tw) = (d("tail")[0], d("tail")[1]);
+            let (ew, eh) = (d("ear")[0], d("ear")[1]);
+            let [bx, by, bl, bh] = [bd[0], bd[1], bd[2], bd[3]];
+            let [hx, hy, hw, hh] = [hd[0], hd[1], hd[2], hd[3]];
+            body_c = [bx, by, bl, bh];
+            head_c = [hx, hy, hw, hh];
+            let blaze = mix(color("white"), main, 0.15);
+            let ground = by + bh / 2.0 + ll * 0.8;
+            let front_hip = (bx + bl * 0.3, by + bh * 0.15);
+            let back_hip = (bx - bl * 0.34, by + bh * 0.02);
+            // tail: thick at the root, carried up in a gentle curve
+            let root = (bx - bl * 0.48, by - bh * 0.25);
+            let tail = curve(root, (root.0 - tl * 0.55, root.1 - tl * 0.1), (root.0 - tl * 0.45, root.1 - tl * 0.8), 10);
+            b.solid("tail", Group::Tail, -3, band(&tail, tw * 1.5, tw * 0.5), main, None);
+            b.add("tail_tip", Group::Tail, -2, band(&tail[7..], tw * 0.8, tw * 0.45), blaze).clip = Some("tail");
+            pivots.insert(Group::Tail, root);
+            // front leg: straight, a pastern, a paw; hind leg: thigh back, hock, cannon down
+            let front = |b: &mut B, g: Group, hip: (f32, f32), c: Rgb, layer: i32| {
+                let elbow = (hip.0 + lw * 0.1, hip.1 + ll * 0.35);
+                let wrist = (hip.0 + lw * 0.15, ground - ll * 0.14);
+                b.solid("leg", g, layer, limb(hip.0, hip.1 - bh * 0.1, elbow.0, elbow.1, lw * 1.6, lw * 1.0), c, None);
+                b.solid("leg", g, layer, limb(elbow.0, elbow.1, wrist.0, wrist.1, lw * 0.95, lw * 0.8), c, None);
+                b.solid("leg", g, layer, limb(wrist.0, wrist.1, wrist.0 + lw * 0.25, ground - lw * 0.35, lw * 0.8, lw * 0.8), c, None);
+                b.solid("paw", g, layer, oval(wrist.0 + lw * 0.5, ground - lw * 0.32, lw * 0.75, lw * 0.36, 0.0), c, None);
+                b.add("toes", g, layer + 1, Shape::Rect { x0: wrist.0 + lw * 0.45, y0: ground - lw * 0.5, x1: wrist.0 + lw * 0.55, y1: ground }, mix(c, color("black"), 0.4)).clip = Some("paw");
+            };
+            let hind = |b: &mut B, g: Group, hip: (f32, f32), c: Rgb, layer: i32| {
+                let stifle = (hip.0 + lw * 0.6, hip.1 + ll * 0.38);
+                let hock = (hip.0 - lw * 0.7, ground - ll * 0.3);
+                b.solid("leg", g, layer, limb(hip.0, hip.1 - bh * 0.1, stifle.0, stifle.1, lw * 2.3, lw * 1.1), c, None);
+                b.solid("leg", g, layer, limb(stifle.0, stifle.1, hock.0, hock.1, lw * 1.05, lw * 0.8), c, None);
+                b.solid("leg", g, layer, limb(hock.0, hock.1, hock.0 + lw * 0.2, ground - lw * 0.35, lw * 0.8, lw * 0.75), c, None);
+                b.solid("paw", g, layer, oval(hock.0 + lw * 0.55, ground - lw * 0.32, lw * 0.75, lw * 0.36, 0.0), c, None);
+            };
+            front(&mut b, Group::LegFR, (front_hip.0 + lw * 0.5, front_hip.1), far(main), -2);
+            hind(&mut b, Group::LegBL, (back_hip.0 + lw * 0.5, back_hip.1), far(main), -2);
+            // body: deep chest in front, belly tucked up towards the hind legs, a level back
+            b.solid("body", Group::Body, 0, Shape::Poly(vec![
+                (bx - bl * 0.5, by - bh * 0.35), (bx - bl * 0.2, by - bh * 0.48), (bx + bl * 0.2, by - bh * 0.5),
+                (bx + bl * 0.45, by - bh * 0.42), (bx + bl * 0.52, by - bh * 0.05), (bx + bl * 0.42, by + bh * 0.5),
+                (bx + bl * 0.15, by + bh * 0.52), (bx - bl * 0.2, by + bh * 0.25), (bx - bl * 0.42, by + bh * 0.3),
+                (bx - bl * 0.54, by + bh * 0.05),
+            ]), main, Some(boxed(body_c)));
+            b.add("chest", Group::Body, 1, oval(bx + bl * 0.38, by + bh * 0.18, bl * 0.12, bh * 0.35, -10.0), blaze).clip = Some("body");
+            // fur: short strokes along the back and the ribs
+            for k in 0..6 {
+                let x = bx - bl * 0.35 + bl * 0.13 * k as f32;
+                b.add("fur", Group::Body, 1, band(&[(x, by - bh * 0.1), (x - bl * 0.03, by + bh * 0.08)], 0.005, 0.004), pal.shade).clip = Some("body");
+            }
+            // neck: thick, rising to the head
+            b.solid("neck", Group::Body, 0, limb(bx + bl * 0.36, by - bh * 0.1, hx - hw * 0.25, hy + hh * 0.1, bh * 0.85, hh * 0.75), main, Some(boxed(body_c)));
+            b.add("throat", Group::Body, 1, limb(bx + bl * 0.45, by + bh * 0.05, hx - hw * 0.05, hy + hh * 0.35, bh * 0.25, hh * 0.25), blaze).clip = Some("neck");
+            // near legs
+            front(&mut b, Group::LegFL, front_hip, main, 2);
+            hind(&mut b, Group::LegBR, back_hip, main, 2);
+            for (g, hip) in [(Group::LegFL, front_hip), (Group::LegFR, (front_hip.0 + lw * 0.5, front_hip.1)), (Group::LegBL, (back_hip.0 + lw * 0.5, back_hip.1)), (Group::LegBR, back_hip)] {
+                pivots.insert(g, hip);
+            }
+            // head: skull, stop, long muzzle, black nose, lip line, jowl
+            b.solid("head", Group::Body, 3, oval(hx - hw * 0.1, hy, hw * 0.42, hh * 0.48, 0.0), main, Some(boxed(head_c)));
+            b.solid("muzzle", Group::Body, 3, Shape::Poly(vec![
+                (hx + hw * 0.05, hy - hh * 0.18), (hx + hw * 0.55, hy - hh * 0.05), (hx + hw * 0.62, hy + hh * 0.12),
+                (hx + hw * 0.55, hy + hh * 0.3), (hx + hw * 0.1, hy + hh * 0.42), (hx - hw * 0.05, hy + hh * 0.3),
+            ]), main, Some(boxed(head_c)));
+            b.add("muzzle_light", Group::Body, 4, Shape::Poly(vec![(hx + hw * 0.1, hy + hh * 0.12), (hx + hw * 0.6, hy + hh * 0.18), (hx + hw * 0.52, hy + hh * 0.32), (hx + hw * 0.1, hy + hh * 0.42)]), blaze).clip = Some("muzzle");
+            b.solid("nose", Group::Body, 5, oval(hx + hw * 0.58, hy + hh * 0.02, hw * 0.08, hh * 0.08, 0.0), color("black"), None);
+            b.detail("nose_shine", Group::Body, 6, Shape::Rect { x0: hx + hw * 0.54, y0: hy - hh * 0.03, x1: hx + hw * 0.58, y1: hy + hh * 0.0 }, color("grey"));
+            b.detail("mouth", Group::Body, 5, band(&curve((hx + hw * 0.56, hy + hh * 0.2), (hx + hw * 0.35, hy + hh * 0.3), (hx + hw * 0.12, hy + hh * 0.26), 5), 0.008, 0.008), pal.deep);
+            if req.has(Feature::Happy).is_some() || chosen.get("mouth").copied() == Some("open") {
+                b.detail("tongue", Group::Body, 6, oval(hx + hw * 0.3, hy + hh * 0.36, hw * 0.08, hh * 0.08, 0.0), color("pink"));
+            }
+            b.add("stop", Group::Body, 4, band(&[(hx + hw * 0.02, hy - hh * 0.3), (hx + hw * 0.08, hy - hh * 0.1)], 0.006, 0.006), pal.shade).clip = Some("head");
+            eye(&mut b, hx + hw * 0.1, hy - hh * 0.12, hh * 0.13, eye_col, "round", main, angry, cfg);
+            // drop ears: the far one peeks behind the skull, the near one hangs over the cheek
+            b.solid("ear", Group::Body, 2, oval(hx - hw * 0.25, hy - hh * 0.05, ew * 0.45, eh * 0.55, 15.0), far(pal.shade), None);
+            b.solid("ear", Group::Body, 5, Shape::Poly(vec![
+                (hx - hw * 0.35, hy - hh * 0.38), (hx - hw * 0.1, hy - hh * 0.42), (hx - hw * 0.05, hy - hh * 0.1),
+                (hx - hw * 0.12, hy - hh * 0.4 + eh), (hx - hw * 0.3, hy - hh * 0.4 + eh * 1.05), (hx - hw * 0.42, hy - hh * 0.1),
+            ]), mix(pal.shade, pal.deep, 0.6), None);
+            b.add("ear_fold", Group::Body, 6, band(&[(hx - hw * 0.28, hy - hh * 0.3), (hx - hw * 0.24, hy - hh * 0.4 + eh * 0.9)], 0.006, 0.005), pal.deep).clip = Some("ear");
             has_eyes = true;
             gait = Gait::Quadruped;
         }
@@ -1040,6 +1130,18 @@ mod tests {
         }
         // the left hand is in the pocket, the right is a claw: no human hands drawn
         assert!(!f.parts.iter().any(|p| p.role == "hand"));
+    }
+
+    #[test]
+    fn a_dog_is_a_quadruped_with_a_muzzle_and_drop_ears() {
+        let f = fig("a dog");
+        assert_eq!(f.gait, Gait::Quadruped);
+        for role in ["muzzle", "nose", "ear", "tail", "paw"] {
+            assert!(f.parts.iter().any(|p| p.role == role), "{role}");
+        }
+        for g in [Group::LegFL, Group::LegFR, Group::LegBL, Group::LegBR] {
+            assert!(f.pivots.contains_key(&g));
+        }
     }
 
     #[test]

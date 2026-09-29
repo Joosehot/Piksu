@@ -14,7 +14,7 @@ macro_rules! kinds {
 kinds!(Subject {
     Slime = "slime", Ghost = "ghost", Bat = "bat", Cat = "cat", Frog = "frog", Knight = "knight",
     Robot = "robot", Coin = "coin", Gem = "gem", Star = "star", Heart = "heart", Potion = "potion",
-    Mushroom = "mushroom", Human = "human",
+    Mushroom = "mushroom", Human = "human", Dog = "dog",
 });
 kinds!(Color {
     Red = "red", Orange = "orange", Yellow = "yellow", Green = "green", Blue = "blue", Purple = "purple",
