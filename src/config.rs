@@ -208,7 +208,7 @@ pub struct Checks {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Output {
-    pub preview_scale: u32,
+    pub preview_size: u32,
     pub gif_frame_ms: u32,
     pub sheet_padding: u32,
 }

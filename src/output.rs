@@ -91,7 +91,7 @@ pub fn why_text(sp: &Sprite) -> String {
 pub fn write(sp: &Sprite, cfg: &Config, dir: &Path) -> anyhow::Result<()> {
     std::fs::create_dir_all(dir.join("frames"))?;
     std::fs::create_dir_all(dir.join("droid"))?;
-    let scale = cfg.output.preview_scale;
+    let scale = (cfg.output.preview_size / sp.size).max(1);
     sheet(sp, cfg, 1).save(dir.join("sheet.png")).context("sheet.png")?;
     sheet(sp, cfg, scale).save(dir.join("preview.png")).context("preview.png")?;
     let name = slug(sp);

@@ -7,7 +7,7 @@ for it, and a sprite that fails its checks isn't written at all.
 
 ```
 $ piksu "a small green slime with big eyes, bouncing"
-a small green slime with big eyes, bouncing -> out/slime_bounce (12px, 6 frames)
+a small green slime with big eyes, bouncing -> out/slime_bounce (12px, 8 frames)
   body               body/round (the slime)
   colour             "green slime"
   eyes               eyes/shine
@@ -44,6 +44,11 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
 
 ## What it knows (v0)
 
+- **People:** "a human" (man, woman, person, cowboy...) is drawn from the front with real
+  anatomy at every realism level. Clothes are features coloured by the sentence: hair, coat,
+  shirt, trousers, boots, belt, and a claw arm. Named characters live in rules.toml
+  `[characters]`: `piksu "Winston Black, walking"`.
+
 - **Subjects:** slime, ghost, bat, cat, frog, knight, robot, coin, gem, star, heart, potion, mushroom.
 - **Colours:** red, orange, yellow, green, blue, purple, pink, black, white, grey, brown, gold,
   silver and teal, each optionally light or dark. A colour before a feature colours that feature
@@ -53,7 +58,8 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
 - **Animations:** idle, bouncing, walking, flying, spinning, floating, blinking and hurt.
   "6 frames" sets the count. A slime can't walk and a coin doesn't fly; you get an error instead
   of a guess.
-- **Sizes:** tiny, small, medium, big, large and huge, or "24x24" / "24 pixels".
+- **Sizes:** 128 x 128 is the baseline (a face, a coat's folds and a claw's scales get several
+  pixels each). Tiny, small, medium, big, large and huge, or "24x24" / "24 pixels", ask for less.
 - **Style:** outlined, "no outline", flat or shaded. Mood words: cute, spooky, simple and detailed.
 - **Realism:** "cartoon" (flat colour, big eyes), "stylized" (directional light in several tones)
   or "realistic". Realistic is real anatomy, not just light (`src/anatomy.rs`, numbers in
@@ -63,7 +69,7 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   with knees, elbows and a front-view walk (a knight with a visored helm, sword and kite shield),
   and objects as they are built (a fly agaric with gills and a ring, a coin turned to show its
   milled edge and relief, a brilliant-cut gem, a glass flask with liquid). On top: light in five
-  tones with dithered edges and material texture. Realistic sprites default to 32 pixels. Judges
+  tones with dithered edges and material texture. Judges
   keep it honest: realism wants directional light, a selective outline and at least 16 pixels.
 
 `piksu --vocabulary` lists every word.
@@ -73,7 +79,7 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
 `out/<subject>_<animation>/` (or `-o DIR`):
 
 - `sheet.png` has one row per animation.
-- `preview.png` is the same sheet enlarged.
+- `preview.png` is the same sheet enlarged to about 512 pixels.
 - `frames/*.png` holds each frame, and `<animation>.gif` is an animated preview.
 - `droid/*.txt` holds Droid text sprites (a palette, `---`, then pixel rows), ready for a Droid game's `sprites/`.
 - `why.txt` maps every piece to the rule and variant that made it and the words that asked for it.

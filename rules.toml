@@ -18,17 +18,17 @@ simple = [0.0, 0.3, -0.4]
 detailed = [0.0, -0.1, 0.4]
 
 [sizes]
-default = 16
+default = 128      # the baseline: pixel art is drawn at 128 x 128 unless a size is asked for
 tiny = 8
 small = 12
 medium = 16
 big = 24
 large = 32
 huge = 48
-realistic = 32     # "realistic" with no size: anatomy needs room
-person = 48        # a person with no size: a full figure needs height
+realistic = 128
+person = 128
 min = 8
-max = 64
+max = 128
 
 # ---------------------------------------------------------------- variants
 [variants.realism]
@@ -268,16 +268,16 @@ wing_span = 0.3        # wings added to a subject that has none
 # ---------------------------------------------------------------- animation
 # frames = default frame count; the rest are amplitudes in canvas fractions (angles in degrees).
 [animations.idle]
-frames = 4
+frames = 6
 bob = 0.03
 
 [animations.bounce]
-frames = 6
+frames = 8
 height = 0.14
 squash = 0.2
 
 [animations.walk]
-frames = 4
+frames = 8
 step = 0.06
 bob = 0.03
 swing = 22.0       # realistic: degrees a leg turns from the hip (arms 70% of it, the other way)
@@ -285,18 +285,18 @@ height = 0.12      # realistic hop: how high a frog leaps
 arm_foreshorten = 0.18   # realistic front view: an arm swinging forward looks this much shorter
 
 [animations.fly]
-frames = 4
+frames = 8
 flap = 38.0
 flap_realistic = 20.0   # real wings sweep less, so the figure keeps its size
 bob = 0.04
 
 [animations.spin]
-frames = 8
+frames = 12
 min_width = 0.12
 max_change = 0.6       # a turning coin changes its silhouette a lot by nature
 
 [animations.float]
-frames = 6
+frames = 8
 drift = 0.06
 
 [animations.blink]
@@ -397,10 +397,10 @@ cap = [0.5, 0.4, 0.66, 0.3]
 stem = [0.2, 0.42]
 
 [anatomy.human]
-body = [0.5, 0.32, 0.22, 0.26]    # the torso, shoulders to hips
-head = [0.5, 0.11, 0.1, 0.125]    # ~7 heads tall; a touch big so a face fits in pixels
-leg = [0.08, 0.43]
-arm = [0.065, 0.33]
+body = [0.5, 0.315, 0.2, 0.25]    # the torso, shoulders to hips
+head = [0.5, 0.105, 0.085, 0.115] # about 7.5 heads tall
+leg = [0.075, 0.46]               # hip to ankle
+arm = [0.058, 0.25]               # shoulder to wrist
 
 [anatomy_iris]
 cat = "green"
@@ -408,12 +408,13 @@ frog = "gold"
 knight = "brown"
 robot = "teal"
 slime = "black"
+human = "brown"
 
 # ---------------------------------------------------------------- characters
 # A name in a sentence stands for its description; the rest of the sentence still applies
 # ("winston black, walking"). Descriptions use only the vocabulary.
 [characters]
-"winston black" = "a realistic man with black hair, a long brown coat, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm"
+"winston black" = "a realistic man with black hair, a long brown coat, green eyes, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm"
 
 [shading]
 shade_cut = 0.45       # top_light: (x + y) past this, in the part's own -1..1 box, is shade
@@ -431,6 +432,6 @@ symmetry_tolerance = 0.06
 
 # ---------------------------------------------------------------- output
 [output]
-preview_scale = 8
+preview_size = 512     # preview.png and the GIF are enlarged to about this many pixels
 gif_frame_ms = 120
 sheet_padding = 1

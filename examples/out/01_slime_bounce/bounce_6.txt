@@ -1,26 +1,26 @@
 a = #45523b
-b = #344b28
-c = #d8ffb7
-d = #a3eb7e
-e = #4f4f4f
-f = #f7f7f7
+b = #4f4f4f
+c = #1f401c
+d = #d8ffb7
+e = #f7f7f7
+f = #62c756
 g = #14121a
-h = #295f3c
-i = #0d1f13
-j = #1f401c
-k = #62c756
-l = #3e8f4e
-m = #142e19
+h = #3e8f4e
+i = #142e19
+j = #344b28
+k = #a3eb7e
+l = #295f3c
+m = #0d1f13
 ---
 ............
 ............
-.....ab.....
-....acdb....
-...effffe...
-..bdfggfhi..
-..jkkklhhi..
-..mllhhhhi..
-...mmiiii...
+....abbc....
+...adeefc...
+..adegeehi..
+..jkeeeelm..
+..ihhhlllm..
+...illllm...
+....mmmm....
 ............
 ............
 ............

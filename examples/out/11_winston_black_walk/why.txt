@@ -1,6 +1,6 @@
 Winston Black, walking
 
-character          "winston black" = "a realistic man with black hair, a long brown coat, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm" (rules.toml [characters])
+character          "winston black" = "a realistic man with black hair, a long brown coat, green eyes, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm" (rules.toml [characters])
 body               body/round (the man)
 material           cloth (a human is made of it)
 colour             default for a human (skin)

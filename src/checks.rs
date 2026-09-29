@@ -21,12 +21,15 @@ fn centroid(g: &Grid) -> (f32, f32) {
     if n == 0.0 { (0.0, 0.0) } else { (x / n, y / n) }
 }
 
-/// Pixels whose filled/empty state differs, at the best small shift of `b` onto `a`.
+/// Pixels whose filled/empty state differs, at the best shift of `b` onto `a`: the centroids
+/// are lined up first (so the size of the canvas doesn't matter), then a small search around.
 fn shape_change(a: &Grid, b: &Grid) -> usize {
     let s = a.size as i32;
+    let (ca, cb) = (centroid(a), centroid(b));
+    let (bx, by) = ((cb.0 - ca.0).round() as i32, (cb.1 - ca.1).round() as i32);
     let mut best = usize::MAX;
-    for dy in -3..=3 {
-        for dx in -3..=3 {
+    for dy in by - 3..=by + 3 {
+        for dx in bx - 3..=bx + 3 {
             let mut d = 0;
             for y in 0..s {
                 for x in 0..s {
