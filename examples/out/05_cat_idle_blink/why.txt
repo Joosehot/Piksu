@@ -1,0 +1,16 @@
+an orange cat with a tail, idle and blinking
+
+body               body/round (the cat)
+colour             "orange cat"
+tail               "tail"
+eyes               eyes/dot
+mouth              mouth/none
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/top_light (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/dot (scored best for the profile; a cat has a face)
+mouth              mouth/none (scored best for the profile; a cat has a face)
+timing             timing/eased (scored best for the profile; idle)
+animation idle     "idle"
+animation blink    "blinking"

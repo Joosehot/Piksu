@@ -1,0 +1,2 @@
+examples/out/** -text
+*.txt text eol=lf

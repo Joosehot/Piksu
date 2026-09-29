@@ -1,0 +1,14 @@
+a spooky white ghost with red eyes, floating
+
+body               body/tall (the ghost)
+colour             "white ghost"
+eyes               eyes/angry
+mouth              mouth/fangs
+body               body/tall (scored best for the profile; every sprite has a body)
+palette            palette/value_only (scored best for the profile; every sprite has colours)
+shading            shading/rim (scored best for the profile; every sprite is shaded somehow)
+outline            outline/dark (scored best for the profile; every sprite has an edge)
+eyes               eyes/angry (scored best for the profile; a ghost has a face)
+mouth              mouth/fangs (scored best for the profile; a ghost has a face)
+timing             timing/eased (scored best for the profile; floating)
+animation float    "floating"

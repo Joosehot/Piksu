@@ -1,0 +1,308 @@
+# Piksu rules: every number the sprite engine uses.
+# Coordinates are fractions of the canvas (0..1), y grows downwards.
+# Profile axes, in this order everywhere: [cute, readable, detail].
+
+[search]
+beam_width = 24
+per_shape = 3            # at most this many beam entries share a body + eyes choice
+finalists = 6
+evidence_bonus = 8.0
+
+[profile]
+default = [0.5, 0.5, 0.5]
+
+[profile.shift]
+cute = [0.4, 0.0, 0.0]
+spooky = [-0.4, 0.0, 0.1]
+simple = [0.0, 0.3, -0.4]
+detailed = [0.0, -0.1, 0.4]
+
+[sizes]
+default = 16
+tiny = 8
+small = 12
+medium = 16
+big = 24
+large = 32
+huge = 48
+min = 8
+max = 64
+
+# ---------------------------------------------------------------- variants
+[variants.body]
+round = { weight = 1.0, axes = [0.5, 0.2, 0.0] }
+tall = { weight = 1.0, axes = [-0.2, 0.2, 0.2] }
+wide = { weight = 0.95, axes = [0.2, 0.3, -0.1] }
+
+[variants.palette]
+hue_shift = { weight = 1.05, axes = [0.2, 0.1, 0.4] }
+value_only = { weight = 1.0, axes = [0.0, 0.3, -0.3] }
+
+[variants.shading]
+flat = { weight = 1.0, axes = [0.1, 0.5, -0.6] }
+top_light = { weight = 1.05, axes = [0.2, 0.2, 0.3] }
+rim = { weight = 0.95, axes = [-0.1, 0.0, 0.6] }
+
+[variants.outline]
+dark = { weight = 1.05, axes = [0.0, 0.7, 0.0] }
+colored = { weight = 1.0, axes = [0.4, 0.3, 0.3] }
+none = { weight = 0.8, axes = [0.1, -0.6, -0.2] }
+
+[variants.eyes]
+dot = { weight = 1.0, axes = [-0.2, 0.4, -0.5] }
+shine = { weight = 1.0, axes = [0.7, 0.2, 0.3] }
+angry = { weight = 0.95, axes = [-0.7, 0.2, 0.2] }
+sleepy = { weight = 0.9, axes = [0.3, 0.0, 0.0] }
+visor = { weight = 1.0, axes = [-0.2, 0.3, 0.1] }
+
+[variants.mouth]
+none = { weight = 1.0, axes = [-0.2, 0.3, -0.4] }
+smile = { weight = 1.0, axes = [0.6, 0.1, 0.1] }
+open = { weight = 0.95, axes = [0.2, 0.0, 0.2] }
+fangs = { weight = 0.95, axes = [-0.6, 0.0, 0.3] }
+
+[variants.timing]
+linear = { weight = 1.0, axes = [0.0, 0.2, -0.3] }
+eased = { weight = 1.05, axes = [0.2, 0.1, 0.2] }
+snappy = { weight = 1.0, axes = [0.1, 0.3, 0.1] }
+
+# ---------------------------------------------------------------- judges
+[judges]
+small_canvas_detail = -0.8       # rim shading or shine eyes below `detail_min_size` pixels
+no_outline_small = -0.9          # no outline below `outline_min_size` pixels
+cute_needs_soft_face = 0.5       # shine eyes + a smile
+spooky_needs_hard_face = 0.5     # angry eyes or fangs
+colored_outline_with_hue_shift = 0.3
+dot_eyes_on_big_canvas = -0.5    # tiny eyes lost on a big sprite
+
+[thresholds]
+detail_min_size = 16
+outline_min_size = 16
+dot_eyes_max_size = 24
+
+# ---------------------------------------------------------------- palette
+[palette_rules]
+shade_value = 0.72       # shade = main with value x this
+light_value = 1.18       # light = main with value x this (clamped)
+light_saturation = 0.82
+shade_hue_shift = 18.0   # degrees toward blue for shadows (hue_shift palette)
+light_hue_shift = -14.0  # degrees toward yellow for highlights
+outline_value = 0.32     # coloured outline = main with value x this
+dark_outline = [0.09, 0.08, 0.12]
+eye_white = [0.97, 0.97, 0.97]
+eye_dark = [0.08, 0.07, 0.1]
+mouth = [0.35, 0.08, 0.12]
+accent_default = [0.98, 0.84, 0.25]
+
+[colors]
+red = [0.86, 0.2, 0.2]
+orange = [0.96, 0.55, 0.15]
+yellow = [0.98, 0.85, 0.2]
+green = [0.35, 0.78, 0.3]
+blue = [0.25, 0.48, 0.92]
+purple = [0.6, 0.32, 0.82]
+pink = [0.96, 0.52, 0.72]
+black = [0.22, 0.22, 0.27]
+white = [0.94, 0.94, 0.97]
+grey = [0.58, 0.58, 0.64]
+brown = [0.58, 0.38, 0.22]
+gold = [0.95, 0.75, 0.2]
+silver = [0.78, 0.8, 0.86]
+teal = [0.2, 0.72, 0.7]
+
+[tones]
+light = 1.2    # "light green": value x this, saturation x 0.8
+dark = 0.7     # "dark green": value x this
+
+# The default colour of each subject when the sentence names none.
+[default_color]
+slime = "green"
+ghost = "white"
+bat = "purple"
+cat = "orange"
+frog = "green"
+knight = "silver"
+robot = "grey"
+coin = "gold"
+gem = "teal"
+star = "yellow"
+heart = "red"
+potion = "pink"
+mushroom = "red"
+
+# ---------------------------------------------------------------- shapes
+# body = [centre x, centre y, width, height] of the main body, per body variant.
+# eyes_y / eye_gap are fractions of the canvas; eye_r is the eye radius (big eyes x big_eyes).
+[shapes]
+eye_gap = 0.2
+eye_r = 0.085
+big_eyes = 1.45
+small_eyes = 0.7
+pupil = 0.55            # pupil radius / eye radius
+mouth_w = 0.18
+mouth_h = 0.07
+margin = 0.06           # keep the silhouette this far from the edges (outline room)
+max_grow = 1.4          # the fit step may enlarge a small figure up to this much
+
+[shapes.slime]
+round = [0.5, 0.62, 0.8, 0.62]
+tall = [0.5, 0.58, 0.64, 0.72]
+wide = [0.5, 0.66, 0.86, 0.52]
+eyes_y = -0.08          # relative to body centre
+
+[shapes.ghost]
+round = [0.5, 0.5, 0.66, 0.74]
+tall = [0.5, 0.5, 0.56, 0.8]
+wide = [0.5, 0.52, 0.74, 0.66]
+eyes_y = -0.1
+
+[shapes.bat]
+round = [0.5, 0.52, 0.36, 0.36]
+tall = [0.5, 0.52, 0.3, 0.42]
+wide = [0.5, 0.54, 0.42, 0.32]
+eyes_y = -0.02
+wing_span = 0.46        # each wing reaches this far from the body centre
+wing_h = 0.3
+
+[shapes.cat]
+round = [0.5, 0.58, 0.62, 0.56]
+tall = [0.5, 0.56, 0.52, 0.64]
+wide = [0.5, 0.6, 0.7, 0.5]
+eyes_y = -0.06
+ear_h = 0.2
+
+[shapes.frog]
+round = [0.5, 0.62, 0.72, 0.52]
+tall = [0.5, 0.6, 0.6, 0.6]
+wide = [0.5, 0.64, 0.82, 0.46]
+eyes_y = -0.26          # frog eyes sit on top of the head
+leg_h = 0.12
+
+[shapes.knight]
+round = [0.5, 0.4, 0.56, 0.46]
+tall = [0.5, 0.38, 0.5, 0.52]
+wide = [0.5, 0.42, 0.62, 0.42]
+eyes_y = 0.0
+torso_h = 0.3
+leg_h = 0.14
+
+[shapes.robot]
+round = [0.5, 0.36, 0.56, 0.42]
+tall = [0.5, 0.34, 0.48, 0.46]
+wide = [0.5, 0.38, 0.66, 0.38]
+eyes_y = 0.0
+torso_h = 0.3
+leg_h = 0.14
+
+[shapes.coin]
+round = [0.5, 0.5, 0.7, 0.7]
+tall = [0.5, 0.5, 0.6, 0.78]
+wide = [0.5, 0.5, 0.78, 0.66]
+eyes_y = 0.0
+
+[shapes.gem]
+round = [0.5, 0.52, 0.66, 0.66]
+tall = [0.5, 0.52, 0.56, 0.78]
+wide = [0.5, 0.54, 0.76, 0.58]
+eyes_y = 0.02
+
+[shapes.star]
+round = [0.5, 0.52, 0.82, 0.82]
+tall = [0.5, 0.52, 0.72, 0.86]
+wide = [0.5, 0.54, 0.86, 0.74]
+eyes_y = 0.04
+
+[shapes.heart]
+round = [0.5, 0.52, 0.78, 0.7]
+tall = [0.5, 0.52, 0.66, 0.78]
+wide = [0.5, 0.54, 0.84, 0.64]
+eyes_y = -0.02
+
+[shapes.potion]
+round = [0.5, 0.64, 0.62, 0.56]
+tall = [0.5, 0.62, 0.5, 0.64]
+wide = [0.5, 0.66, 0.7, 0.5]
+eyes_y = 0.02
+neck_w = 0.26
+neck_h = 0.2
+
+[shapes.mushroom]
+round = [0.5, 0.4, 0.84, 0.5]
+tall = [0.5, 0.38, 0.72, 0.56]
+wide = [0.5, 0.42, 0.9, 0.44]
+eyes_y = 0.34           # the face is on the stem
+stem_w = 0.36
+stem_h = 0.36
+
+# ---------------------------------------------------------------- features
+[features]
+horn_h = 0.2
+horn_w = 0.12
+crown_h = 0.16
+hat_h = 0.22
+antenna_h = 0.18
+spot_r = 0.07
+stripe_h = 0.07
+tail_len = 0.24
+wing_span = 0.3        # wings added to a subject that has none
+
+# ---------------------------------------------------------------- animation
+# frames = default frame count; the rest are amplitudes in canvas fractions (angles in degrees).
+[animations.idle]
+frames = 4
+bob = 0.03
+
+[animations.bounce]
+frames = 6
+height = 0.14
+squash = 0.2
+
+[animations.walk]
+frames = 4
+step = 0.06
+bob = 0.03
+
+[animations.fly]
+frames = 4
+flap = 38.0
+bob = 0.04
+
+[animations.spin]
+frames = 8
+min_width = 0.12
+max_change = 0.6       # a turning coin changes its silhouette a lot by nature
+
+[animations.float]
+frames = 6
+drift = 0.06
+
+[animations.blink]
+frames = 6
+closed_frame = 3
+
+[animations.hurt]
+frames = 4
+shake = 0.05
+
+[timing]
+snappy_hold = 0.3      # fraction of the cycle held at each extreme
+
+[shading]
+shade_cut = 0.45       # top_light: (x + y) past this, in the part's own -1..1 box, is shade
+light_cut = 0.75       # top_light: (x + y) below minus this is highlight
+rim_band = 0.72        # rim: radius past this is the rim (shade low-right, light up-left)
+
+# ---------------------------------------------------------------- checks
+[checks]
+min_fill = 0.12        # the silhouette covers at least this fraction of the canvas (frame 0)
+max_fill = 0.85
+min_contrast = 0.18    # luminance difference outline vs main, eyes vs main
+max_change = 0.4       # at most this fraction of silhouette pixels change shape between frames (moves taken out)
+max_step = 0.18        # the silhouette's centre moves at most this fraction of the canvas per frame
+symmetry_tolerance = 0.06
+
+# ---------------------------------------------------------------- output
+[output]
+preview_scale = 8
+gif_frame_ms = 120
+sheet_padding = 1
