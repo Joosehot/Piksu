@@ -36,7 +36,7 @@ alternative. If none pass, Piksu says why and writes nothing:
 ```
 $ piksu "a tiny pink heart, spinning"
 error: no design passed the checks
-  hint: spin: frame 3 -> 4 reshapes 20 of 30 pixels (jumpy)
+  hint: spin frame 4 is empty
 ```
 
 Every number (proportions, palette shifts, animation amplitudes, judge weights, check limits)
