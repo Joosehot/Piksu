@@ -28,6 +28,10 @@ pub struct Config {
     pub lighting: Lighting,
     pub realism: RealismCfg,
     pub materials: Materials,
+    /// realistic blueprints: per subject, named proportion arrays (canvas fractions)
+    pub anatomy: BTreeMap<String, BTreeMap<String, Vec<f32>>>,
+    /// realistic eye (iris) colour per subject
+    pub anatomy_iris: BTreeMap<String, String>,
     pub shading: Shading,
     pub checks: Checks,
     pub output: Output,
@@ -59,6 +63,8 @@ pub struct Sizes {
     pub big: u32,
     pub large: u32,
     pub huge: u32,
+    /// a realistic sprite with no size asked for (anatomy needs pixels)
+    pub realistic: u32,
     pub min: u32,
     pub max: u32,
 }
@@ -295,6 +301,19 @@ impl Config {
                 bail!("realism.eye_scale and realism.saturation need a value for {}", r.name());
             }
         }
+        for (subj, keys) in crate::anatomy::REQUIRED {
+            let t = self.anatomy.get(*subj).ok_or_else(|| anyhow!("missing [anatomy.{subj}]"))?;
+            for k in *keys {
+                if t.get(*k).is_none_or(|v| v.is_empty()) {
+                    bail!("missing anatomy.{subj}.{k}");
+                }
+            }
+        }
+        for (subj, c) in &self.anatomy_iris {
+            if !self.colors.contains_key(c) {
+                bail!("anatomy_iris.{subj} = \"{c}\" is not a colour");
+            }
+        }
         if self.sizes.min < 4 || self.sizes.max < self.sizes.min {
             bail!("sizes.min must be at least 4 and at most sizes.max");
         }
@@ -327,6 +346,7 @@ impl Config {
     pub fn size_of(&self, r: &crate::request::Request) -> u32 {
         use crate::request::SizeReq;
         match r.size.as_ref().map(|s| s.v) {
+            None if r.realism.as_ref().map(|x| x.v) == Some(crate::request::Realism::Realistic) => self.sizes.realistic,
             None => self.sizes.default,
             Some(SizeReq::Px(n)) => n,
             Some(SizeReq::Word(w)) => match w {

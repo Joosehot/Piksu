@@ -25,6 +25,7 @@ medium = 16
 big = 24
 large = 32
 huge = 48
+realistic = 32     # "realistic" with no size: anatomy needs room
 min = 8
 max = 64
 
@@ -275,10 +276,14 @@ squash = 0.2
 frames = 4
 step = 0.06
 bob = 0.03
+swing = 22.0       # realistic: degrees a leg turns from the hip (arms 70% of it, the other way)
+height = 0.12      # realistic hop: how high a frog leaps
+arm_foreshorten = 0.18   # realistic front view: an arm swinging forward looks this much shorter
 
 [animations.fly]
 frames = 4
 flap = 38.0
+flap_realistic = 20.0   # real wings sweep less, so the figure keeps its size
 bob = 0.04
 
 [animations.spin]
@@ -324,6 +329,73 @@ cloth = 0.06
 stone = 0.04
 metal_band = [-0.5, -0.22]        # metal: a bright vertical streak between these x positions (-1..1)
 gel_core = 0.12                   # gel: glow added in the middle
+
+# ---------------------------------------------------------------- anatomy (realistic)
+# Boxes are [centre x, centre y, width, height]; limbs are [width, length].
+# Animals face right in side view; people and robots face the viewer (about 6.5 heads tall).
+[anatomy.cat]
+body = [0.45, 0.55, 0.5, 0.22]
+head = [0.78, 0.38, 0.2, 0.18]
+leg = [0.06, 0.22]
+tail = [0.35, 0.05]      # length, thickness
+ear = [0.07, 0.08]
+
+[anatomy.frog]
+body = [0.45, 0.6, 0.5, 0.32]
+head = [0.68, 0.52, 0.3, 0.24]
+leg = [0.09, 0.4]
+
+[anatomy.bat]
+body = [0.5, 0.56, 0.2, 0.28]
+head = [0.5, 0.37, 0.19, 0.16]
+wing = [0.45, 0.42]      # half span, height
+ear = [0.06, 0.1]
+
+[anatomy.knight]
+body = [0.5, 0.36, 0.26, 0.3]
+head = [0.5, 0.13, 0.11, 0.12]
+leg = [0.085, 0.36]
+arm = [0.07, 0.32]
+
+[anatomy.robot]
+body = [0.5, 0.38, 0.32, 0.28]
+head = [0.5, 0.15, 0.18, 0.14]
+leg = [0.1, 0.32]
+arm = [0.08, 0.3]
+
+[anatomy.slime]
+body = [0.5, 0.6, 0.6, 0.42]
+
+[anatomy.ghost]
+body = [0.5, 0.5, 0.5, 0.7]
+
+[anatomy.coin]
+body = [0.5, 0.48, 0.56, 0.62]
+edge = [0.06]
+
+[anatomy.gem]
+body = [0.5, 0.5, 0.6, 0.55]
+
+[anatomy.star]
+body = [0.5, 0.52, 0.8, 0.76]
+
+[anatomy.heart]
+body = [0.5, 0.5, 0.7, 0.62]
+
+[anatomy.potion]
+body = [0.5, 0.62, 0.5, 0.46]
+neck = [0.16, 0.18]
+
+[anatomy.mushroom]
+cap = [0.5, 0.4, 0.66, 0.3]
+stem = [0.2, 0.42]
+
+[anatomy_iris]
+cat = "green"
+frog = "gold"
+knight = "brown"
+robot = "teal"
+slime = "black"
 
 [shading]
 shade_cut = 0.45       # top_light: (x + y) past this, in the part's own -1..1 box, is shade

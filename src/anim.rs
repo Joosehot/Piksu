@@ -3,7 +3,7 @@
 //! so the last frame always leads back into the first.
 
 use crate::config::Config;
-use crate::figure::{Figure, Group};
+use crate::figure::{Figure, Gait, Group};
 use crate::request::Anim;
 use std::collections::BTreeMap;
 
@@ -106,12 +106,50 @@ pub fn frames(anim: Anim, n: u32, timing: &str, fig: &Figure, cfg: &Config) -> V
                 }
                 Anim::Walk => {
                     let step = a("step");
-                    f.groups.insert(Group::LegL, Xf { dy: -step * w.max(0.0), dx: step * 0.5 * w, ..Xf::default() });
-                    f.groups.insert(Group::LegR, Xf { dy: -step * (-w).max(0.0), dx: -step * 0.5 * w, ..Xf::default() });
-                    f.whole.dy = -a("bob") * w.abs();
+                    let swing = a("swing");
+                    let turn = |g: Group, deg: f32| Xf { rot: deg, pivot: fig.pivots.get(&g).copied().unwrap_or((cx, cy)), ..Xf::default() };
+                    match fig.gait {
+                        Gait::Biped => {
+                            // seen from the front: the stepping leg lifts (knee up), the arm on the
+                            // other side comes forward (it looks shorter), the body rises over the
+                            // standing leg
+                            let lift = |s: f32| (s * w).max(0.0);
+                            f.groups.insert(Group::LegL, Xf { dy: -step * lift(1.0), ..Xf::default() });
+                            f.groups.insert(Group::LegR, Xf { dy: -step * lift(-1.0), ..Xf::default() });
+                            let arm = |g: Group, s: f32| {
+                                let pv = fig.pivots.get(&g).copied().unwrap_or((cx, cy));
+                                Xf { sy: 1.0 - a("arm_foreshorten") * lift(s), pivot: pv, ..Xf::default() }
+                            };
+                            f.groups.insert(Group::ArmL, arm(Group::ArmL, -1.0));
+                            f.groups.insert(Group::ArmR, arm(Group::ArmR, 1.0));
+                            f.whole.dy = -a("bob") * w.abs();
+                        }
+                        Gait::Quadruped => {
+                            // diagonal pairs: near front with far back, far front with near back
+                            for (g, s) in [(Group::LegFL, 1.0), (Group::LegBR, 1.0), (Group::LegFR, -1.0), (Group::LegBL, -1.0)] {
+                                f.groups.insert(g, turn(g, -swing * s * w));
+                            }
+                            f.whole.dy = a("bob") * (1.0 - w.abs());
+                        }
+                        Gait::Hop => {
+                            // crouch, then a leap with the hind leg stretched back
+                            let up = hump(p, timing, cfg);
+                            f.whole.dy = -a("height") * 0.5 * up;
+                            f.whole.pivot = (cx, fig.feet_y);
+                            f.whole.rot = -8.0 * up;
+                            f.groups.insert(Group::LegBR, turn(Group::LegBR, swing * up));
+                            f.groups.insert(Group::LegBL, turn(Group::LegBL, swing * up));
+                            f.groups.insert(Group::LegFL, turn(Group::LegFL, -swing * 0.6 * up));
+                        }
+                        _ => {
+                            f.groups.insert(Group::LegL, Xf { dy: -step * w.max(0.0), dx: step * 0.5 * w, ..Xf::default() });
+                            f.groups.insert(Group::LegR, Xf { dy: -step * (-w).max(0.0), dx: -step * 0.5 * w, ..Xf::default() });
+                            f.whole.dy = -a("bob") * w.abs();
+                        }
+                    }
                 }
                 Anim::Fly => {
-                    let flap = a("flap") * w;
+                    let flap = if fig.realism == "realistic" { a("flap_realistic") } else { a("flap") } * w;
                     let pl = fig.pivots.get(&Group::WingL).copied().unwrap_or((cx, cy));
                     let pr = fig.pivots.get(&Group::WingR).copied().unwrap_or((cx, cy));
                     f.groups.insert(Group::WingL, Xf { rot: flap, pivot: pl, ..Xf::default() });

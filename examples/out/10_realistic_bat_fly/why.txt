@@ -1,0 +1,15 @@
+a realistic bat, flying
+
+body               body/round (the bat)
+material           fur (a bat is made of it)
+colour             default for a bat (purple)
+anatomy            realistic bat (side view for animals, front for figures, three-quarter for objects)
+realism            realism/realistic ("realistic"; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/angry (scored best for the profile; a bat has a face)
+mouth              mouth/none (scored best for the profile; a bat has a face)
+timing             timing/eased (scored best for the profile; flying)
+animation fly      "flying"

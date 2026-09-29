@@ -16,6 +16,27 @@ pub enum Group {
     LegL,
     LegR,
     Tail,
+    ArmL,
+    ArmR,
+    /// four-legged animals: front / back, near (L) / far (R)
+    LegFL,
+    LegFR,
+    LegBL,
+    LegBR,
+}
+
+/// How a figure walks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Gait {
+    None,
+    /// two legs slide (cartoon feet)
+    Shuffle,
+    /// two legs swing from the hips, arms swing against them
+    Biped,
+    /// diagonal pairs swing together (near front with far back)
+    Quadruped,
+    /// a crouch and a leap with the hind legs
+    Hop,
 }
 
 #[derive(Clone, Debug)]
@@ -182,6 +203,7 @@ pub struct Figure {
     pub material: Material,
     /// cartoon / stylized / realistic
     pub realism: &'static str,
+    pub gait: Gait,
     /// (piece, how it was decided) for why.txt
     pub why: Vec<(String, String)>,
 }
@@ -265,6 +287,9 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         ramp,
         outline_value: pr.outline_value,
     };
+    if realism == "realistic" {
+        return crate::anatomy::build(req, cfg, chosen, pal, why);
+    }
     let feature_color = |f: Feature, default: Rgb| -> Rgb { req.has(f).and_then(|x| x.color.as_ref()).map(|c| color_of(cfg, c.v.0, c.v.1)).unwrap_or(default) };
 
     let mut b = B { parts: vec![], cfg };
@@ -600,6 +625,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         has_eyes: eye_variant.is_some_and(|e| e != "visor"),
         material: material_of(subj),
         realism,
+        gait: if has_legs { Gait::Shuffle } else { Gait::None },
         why,
     })
 }

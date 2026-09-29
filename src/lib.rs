@@ -2,6 +2,7 @@
 //! lexicon -> parser -> rules with variants -> beam search with judges -> draw -> checks.
 //! No model runs; the same sentence and rules.toml give the same pixels.
 
+pub mod anatomy;
 pub mod anim;
 pub mod checks;
 pub mod color;

@@ -56,9 +56,15 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
 - **Sizes:** tiny, small, medium, big, large and huge, or "24x24" / "24 pixels".
 - **Style:** outlined, "no outline", flat or shaded. Mood words: cute, spooky, simple and detailed.
 - **Realism:** "cartoon" (flat colour, big eyes), "stylized" (directional light in several tones)
-  or "realistic" (light in five tones with dithered edges, material texture: fur, skin, metal
-  streaks, glowing gel, cloth, stone; smaller eyes; natural colours). Judges keep it honest:
-  realism wants directional light, a selective outline and at least 16 pixels.
+  or "realistic". Realistic is real anatomy, not just light (`src/anatomy.rs`, numbers in
+  `[anatomy.*]`): animals in side view (a cat on four jointed legs with a diagonal-pair walk, slit
+  pupils and an S tail; a crouched frog with folded hind legs and an eardrum; a bat with forearm,
+  finger bones and a membrane between them), people and robots at about six and a half heads tall
+  with knees, elbows and a front-view walk (a knight with a visored helm, sword and kite shield),
+  and objects as they are built (a fly agaric with gills and a ring, a coin turned to show its
+  milled edge and relief, a brilliant-cut gem, a glass flask with liquid). On top: light in five
+  tones with dithered edges and material texture. Realistic sprites default to 32 pixels. Judges
+  keep it honest: realism wants directional light, a selective outline and at least 16 pixels.
 
 `piksu --vocabulary` lists every word.
 
