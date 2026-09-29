@@ -69,8 +69,22 @@ fn fit(mut fig: figure::Figure, req: &Request, cfg: &Config, timing: &str, size:
     fig
 }
 
+/// A character's name in the sentence stands for its description from rules.toml [characters].
+pub fn expand_characters(sentence: &str, cfg: &Config) -> (String, Option<String>) {
+    let low = sentence.to_lowercase();
+    for (name, desc) in &cfg.characters {
+        if let Some(at) = low.find(name.as_str()) {
+            let s = format!("{}{}{}", &sentence[..at], desc, &sentence[at + name.len()..]);
+            return (s, Some(name.clone()));
+        }
+    }
+    (sentence.to_string(), None)
+}
+
 pub fn make(sentence: &str, cfg: &Config, opts: &Options) -> Result<Sprite, Vec<parser::Diag>> {
-    let req = parser::parse(sentence, opts.lenient)?;
+    let (expanded, character) = expand_characters(sentence, cfg);
+    let mut req = parser::parse(&expanded, opts.lenient)?;
+    req.sentence = sentence.trim().to_string();
     let size = cfg.size_of(&req);
     if size < cfg.sizes.min || size > cfg.sizes.max {
         return Err(vec![parser::Diag::new(format!("a {size}px sprite is outside {}..{} pixels", cfg.sizes.min, cfg.sizes.max))]);
@@ -124,6 +138,9 @@ pub fn make(sentence: &str, cfg: &Config, opts: &Options) -> Result<Sprite, Vec<
                     let _ = writeln!(ex, "  check ok: {p}");
                 }
                 let mut why = fig.why.clone();
+                if let Some(c) = &character {
+                    why.insert(0, ("character".into(), format!("\"{c}\" = \"{}\" (rules.toml [characters])", cfg.characters[c])));
+                }
                 for s in &cand.steps {
                     let by = s.evidence.as_ref().map(|w| format!("\"{w}\"")).unwrap_or_else(|| "scored best for the profile".into());
                     why.push((s.rule.to_string(), format!("{}/{} ({by}; {})", s.rule, s.variant, s.why)));

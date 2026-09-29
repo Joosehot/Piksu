@@ -5,6 +5,9 @@
 //! under the cap").
 
 use crate::color::{adjust, mix, Rgb};
+
+/// Subjects drawn only by anatomy, at every realism level (no cartoon blueprint in figure.rs).
+pub const ANATOMY_ONLY: &[Subject] = &[Subject::Human];
 use crate::config::Config;
 use crate::figure::{material_of, Figure, Gait, Group, Palette, Part, Shape, Show};
 use crate::request::*;
@@ -144,6 +147,7 @@ pub const REQUIRED: &[(&str, &[&str])] = &[
     ("heart", &["body"]),
     ("potion", &["body", "neck"]),
     ("mushroom", &["cap", "stem"]),
+    ("human", &["body", "head", "leg", "arm"]),
 ];
 
 /// A realistic eye: almond white, coloured iris, pupil (slit, round or wide), one catch-light.
@@ -612,6 +616,142 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
             b.add("reflection", Group::Body, 4, band(&curve((bx - bw * 0.36, by + bh * 0.1), (bx - bw * 0.38, by - bh * 0.25), (bx - bw * 0.12, by - bh * 0.4), 6), 0.035, 0.02), [1.0; 3]).clip = Some("glass");
             symmetric = false;
         }
+        Subject::Human => {
+            // a standing person seen from the front, about 7.5 heads tall. The character's right
+            // side is on the viewer's left (s = -1). Clothes come from the sentence ("a long
+            // brown coat", "black boots"); what isn't named gets plain everyday clothes.
+            let bd = d("body");
+            let hd = d("head");
+            let (lw, ll) = (d("leg")[0], d("leg")[1]);
+            let (aw, al) = (d("arm")[0], d("arm")[1]);
+            let [bx, by, bw, bh] = [bd[0], bd[1], bd[2], bd[3]];
+            let [hx, hy, hw, hh] = [hd[0], hd[1], hd[2], hd[3]];
+            body_c = [bx, by, bw, bh];
+            head_c = [hx, hy, hw, hh];
+            let skin = main;
+            let wear = |f: Feature, default: &str| -> Option<Rgb> {
+                req.has(f).map(|x| x.color.as_ref().map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(cfg.colors[default]))
+                    .map(|c| adjust(c, cfg.realism.cloth_value, cfg.realism.cloth_saturation, 0.0))
+            };
+            let dflt = |f: Feature, default: &str| wear(f, default).unwrap_or(cfg.colors[default]);
+            let shirt = dflt(Feature::Shirt, "cream");
+            let trousers = dflt(Feature::Trousers, "brown");
+            let hair = dflt(Feature::Hair, "brown");
+            let coat = wear(Feature::Coat, "brown");
+            let boots = wear(Feature::Boots, "black");
+            let belt = wear(Feature::Belt, "brown");
+            let claw = wear(Feature::Claw, "black");
+            let (top, waist, hip_y) = (by - bh / 2.0, by + bh * 0.4, by + bh / 2.0);
+            let ankle_y = hip_y + ll;
+            let shoulder = |s: f32| (bx + s * bw * 0.52, top + bh * 0.06);
+
+            // the coat's back hangs behind the legs
+            if let Some(c) = coat {
+                b.solid("coat_back", Group::Body, -3, Shape::Poly(vec![(bx - bw * 0.55, top + 0.01), (bx + bw * 0.55, top + 0.01), (bx + bw * 0.8, ankle_y - ll * 0.22), (bx - bw * 0.8, ankle_y - ll * 0.22)]), adjust(c, 0.7, 1.0, 0.0), None);
+            }
+            // legs: trousers from hip to ankle, boots up the shin, shoes otherwise
+            for (g, s) in [(Group::LegL, -1.0), (Group::LegR, 1.0)] {
+                let hip = (bx + s * bw * 0.23, hip_y);
+                let knee = (hip.0 + s * lw * 0.1, hip_y + ll * 0.5);
+                let ankle = (hip.0 + s * lw * 0.35, ankle_y);
+                b.solid("thigh", g, 0, limb(hip.0, hip.1, knee.0, knee.1, lw * 1.15, lw), trousers, None);
+                b.solid("shin", g, 0, limb(knee.0, knee.1, ankle.0, ankle.1, lw, lw * 0.85), trousers, None);
+                let (shaft_top, fc) = match boots {
+                    Some(c) => (knee.1 + ll * 0.12, c),
+                    None => (ankle.1 - lw * 0.3, cfg.colors["black"]),
+                };
+                b.solid("boot", g, 1, Shape::Poly(vec![(ankle.0 - lw * 0.55, shaft_top), (ankle.0 + lw * 0.55, shaft_top), (ankle.0 + lw * 0.5, ankle.1 - lw * 0.1), (ankle.0 + s * lw * 0.3 + lw * 0.6, ankle.1 + lw * 0.45), (ankle.0 + s * lw * 0.3 - lw * 0.65, ankle.1 + lw * 0.45), (ankle.0 - lw * 0.5, ankle.1 - lw * 0.1)]), fc, None);
+                if boots.is_some() {
+                    b.add("boot_strap", g, 2, Shape::Rect { x0: ankle.0 - lw * 0.55, y0: ankle.1 - lw * 0.35, x1: ankle.0 + lw * 0.55, y1: ankle.1 - lw * 0.15 }, adjust(fc, 1.5, 1.0, 0.0)).clip = Some("boot");
+                }
+                pivots.insert(g, hip);
+            }
+            // torso: the shirt, tapering from the shoulders to the waist; an open collar
+            b.solid("body", Group::Body, 2, Shape::Poly(vec![(bx - bw * 0.5, top), (bx + bw * 0.5, top), (bx + bw * 0.4, waist), (bx + bw * 0.42, hip_y), (bx - bw * 0.42, hip_y), (bx - bw * 0.4, waist)]), shirt, Some(boxed(body_c)));
+            if let Some(st) = req.has(Feature::Stripes) {
+                let c = st.color.as_ref().map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(adjust(shirt, 0.7, 1.0, 0.0));
+                let c = mix(adjust(c, 0.85, cfg.realism.cloth_saturation, 0.0), shirt, 0.25);
+                // pinstripes a pixel wide with a pixel or two of shirt between them
+                for k in -2..=2 {
+                    let x = bx + bw * 0.2 * k as f32;
+                    b.add("shirt_stripe", Group::Body, 3, Shape::Rect { x0: x - 0.009, y0: top, x1: x + 0.009, y1: hip_y }, c).clip = Some("body");
+                }
+            }
+            b.solid("collar_skin", Group::Body, 4, Shape::Poly(vec![(bx - bw * 0.14, top - 0.005), (bx + bw * 0.14, top - 0.005), (bx, top + bh * 0.24)]), skin, None);
+            if let Some(c) = belt {
+                b.solid("belt", Group::Body, 4, Shape::Rect { x0: bx - bw * 0.43, y0: waist, x1: bx + bw * 0.43, y1: waist + bh * 0.08 }, c, None);
+                b.detail("buckle", Group::Body, 5, Shape::Rect { x0: bx - bw * 0.07, y0: waist - bh * 0.01, x1: bx + bw * 0.07, y1: waist + bh * 0.09 }, cfg.colors["gold"]);
+            }
+            // the coat hangs open: two front panels from the shoulders to below the knees, lapels
+            if let Some(c) = coat {
+                for s in [-1.0, 1.0] {
+                    let x = |f: f32| bx + s * f;
+                    b.solid("coat", Group::Body, 5, Shape::Poly(vec![(x(bw * 0.56), top), (x(bw * 0.3), top - 0.005), (x(bw * 0.4), waist), (x(bw * 0.5), ankle_y - ll * 0.2), (x(bw * 0.85), ankle_y - ll * 0.22), (x(bw * 0.6), waist)]), c, Some((bx - bw * 0.85, top, bx + bw * 0.85, ankle_y)));
+                    b.add("lapel", Group::Body, 6, Shape::Poly(vec![(x(bw * 0.3), top - 0.005), (x(bw * 0.52), top + bh * 0.04), (x(bw * 0.4), top + bh * 0.5)]), adjust(c, 1.18, 1.0, 0.0));
+                    b.add("coat_fold", Group::Body, 6, Shape::Rect { x0: x(bw * 0.58) - 0.004, y0: waist + bh * 0.3, x1: x(bw * 0.58) + 0.004, y1: ankle_y - ll * 0.3 }, adjust(c, 0.72, 1.0, 0.0)).clip = Some("coat");
+                }
+            }
+            // arms: sleeves of the coat (or the shirt); a claw replaces the right forearm and hand;
+            // with a coat the left hand rests in the trouser pocket
+            let sleeve = coat.unwrap_or(shirt);
+            for (g, s) in [(Group::ArmL, -1.0), (Group::ArmR, 1.0)] {
+                let sh = shoulder(s);
+                let elbow = (sh.0 + s * aw * 0.35, sh.1 + al * 0.47);
+                let is_claw = s < 0.0 && claw.is_some();
+                let pocket = s > 0.0 && coat.is_some();
+                let hand = if pocket { (bx + s * bw * 0.46, hip_y + ll * 0.04) } else { (sh.0 + s * aw * 0.2, sh.1 + al) };
+                b.solid("upper_arm", g, 7, limb(sh.0, sh.1, elbow.0, elbow.1, aw * 1.1, aw), sleeve, None);
+                if let Some(cc) = claw.filter(|_| is_claw) {
+                    // the sleeve is pushed up; the forearm is scaled and ends in a hand of talons
+                    b.solid("cuff", g, 8, Shape::Ellipse { cx: elbow.0, cy: elbow.1, rx: aw * 0.7, ry: aw * 0.4 }, shirt, None);
+                    let wrist = (elbow.0 + s * aw * 0.1, elbow.1 + al * 0.45);
+                    b.solid("claw_arm", g, 7, limb(elbow.0, elbow.1 + aw * 0.2, wrist.0, wrist.1, aw * 0.95, aw * 0.85), cc, None);
+                    for k in 0..4 {
+                        let y = elbow.1 + al * (0.1 + 0.1 * k as f32);
+                        b.add("scale", g, 8, Shape::Rect { x0: elbow.0 - aw * 0.3, y0: y, x1: elbow.0 + aw * 0.2, y1: y + 0.006 }, adjust(cc, 1.6, 0.8, 0.0)).clip = Some("claw_arm");
+                    }
+                    b.solid("claw_hand", g, 8, oval(wrist.0, wrist.1 + aw * 0.6, aw * 0.95, aw * 0.85, 0.0), cc, None);
+                    for k in 0..4 {
+                        let off = k as f32 - 1.5;
+                        let fx = wrist.0 + aw * 0.5 * off;
+                        let tip = (fx + aw * 0.55 * off, wrist.1 + aw * 3.0 - off.abs() * aw * 0.4);
+                        b.solid("talon", g, 8, band(&curve((fx, wrist.1 + aw * 0.9), (fx + aw * 0.5 * off, wrist.1 + aw * 1.8), tip, 5), aw * 0.4, aw * 0.08), cc, None);
+                        b.detail("talon_tip", g, 9, Shape::Ellipse { cx: tip.0, cy: tip.1, rx: aw * 0.12, ry: aw * 0.12 }, adjust(cc, 1.9, 0.6, 0.0));
+                    }
+                } else {
+                    b.solid("forearm", g, 7, limb(elbow.0, elbow.1, hand.0, hand.1, aw, aw * 0.9), sleeve, None);
+                    if !pocket {
+                        b.solid("hand", g, 8, oval(hand.0, hand.1 + aw * 0.45, aw * 0.5, aw * 0.65, 0.0), skin, None);
+                    }
+                }
+                pivots.insert(g, sh);
+            }
+            // neck and head: face with jaw, ears, eyes under brows, nose, mouth; hair on top
+            b.solid("neck", Group::Body, 1, Shape::Rect { x0: hx - hw * 0.26, y0: hy + hh * 0.3, x1: hx + hw * 0.26, y1: top + 0.01 }, skin, None);
+            for s in [-1.0, 1.0] {
+                b.solid("ear", Group::Body, 8, oval(hx + s * hw * 0.5, hy + hh * 0.02, hw * 0.1, hh * 0.13, 0.0), skin, None);
+            }
+            b.solid("head", Group::Body, 9, Shape::Egg { cx: hx, cy: hy - hh * 0.05, rx: hw / 2.0, ry_top: hh * 0.45, ry_bottom: hh * 0.55 }, skin, Some(boxed(head_c)));
+            b.add("jaw_shadow", Group::Body, 10, Shape::Rect { x0: hx - hw, y0: hy + hh * 0.36, x1: hx + hw, y1: hy + hh }, adjust(skin, 0.82, 1.0, 0.0)).clip = Some("head");
+            for s in [-1.0, 1.0] {
+                let ex = hx + s * hw * 0.21;
+                // brows are a shadow under the forehead, not a second hairline
+                b.add("brow", Group::Body, 10, Shape::Rect { x0: ex - hw * 0.14, y0: hy - hh * 0.1, x1: ex + hw * 0.14, y1: hy - hh * 0.05 }, adjust(skin, 0.8, 1.0, 0.0)).clip = Some("head");
+                b.detail("eye", Group::Body, 11, Shape::Rect { x0: ex - hw * 0.07, y0: hy - hh * 0.03, x1: ex + hw * 0.07, y1: hy + hh * 0.03 }, cfg.palette_rules.eye_dark).show = Show::EyesOpen;
+                b.detail("eye_closed", Group::Body, 11, Shape::Rect { x0: ex - hw * 0.1, y0: hy, x1: ex + hw * 0.1, y1: hy + hh * 0.03 }, adjust(skin, 0.6, 1.0, 0.0)).show = Show::EyesClosed;
+            }
+            b.add("nose", Group::Body, 11, Shape::Rect { x0: hx, y0: hy + hh * 0.02, x1: hx + hw * 0.1, y1: hy + hh * 0.2 }, adjust(skin, 0.78, 1.0, 0.0)).clip = Some("head");
+            b.detail("mouth", Group::Body, 11, Shape::Rect { x0: hx - hw * 0.14, y0: hy + hh * 0.3, x1: hx + hw * 0.14, y1: hy + hh * 0.34 }, adjust(skin, 0.6, 1.1, 0.0));
+            // hair: a tousled mass over the crown, strands falling on the forehead, sideburns
+            let htop = hy - hh * 0.5;
+            b.solid("hair", Group::Body, 12, blob(hx, htop + hh * 0.08, hw * 0.56, hh * 0.22, &[(200.0, 0.2), (250.0, 0.15), (300.0, 0.22), (340.0, 0.1), (160.0, 0.08)]), hair, None);
+            b.solid("hair", Group::Body, 12, Shape::Poly(vec![(hx - hw * 0.45, htop + hh * 0.15), (hx + hw * 0.1, htop + hh * 0.1), (hx - hw * 0.05, htop + hh * 0.36), (hx - hw * 0.25, htop + hh * 0.25), (hx - hw * 0.4, htop + hh * 0.4)]), hair, None);
+            for s in [-1.0, 1.0] {
+                b.solid("hair", Group::Body, 12, Shape::Rect { x0: hx + s * hw * 0.5 - hw * 0.08, y0: htop + hh * 0.2, x1: hx + s * hw * 0.5 + hw * 0.08, y1: hy + hh * 0.02 }, hair, None);
+            }
+            has_eyes = true;
+            gait = Gait::Biped;
+        }
         Subject::Heart | Subject::Star => {
             // symbols stay symbols, built as solid bevelled objects
             let bd = d("body");
@@ -678,12 +818,12 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
                 b.detail("antenna", Group::Body, -1, limb(hx, htop + hh * 0.05, hx + hw * 0.1, htop - hh * 0.5, 0.02, 0.015), color("grey"));
                 b.detail("antenna_tip", Group::Body, 1, Shape::Ellipse { cx: hx + hw * 0.1, cy: htop - hh * 0.55, rx: 0.03, ry: 0.03 }, fc(color("red")));
             }
-            Feature::Spots => {
+            Feature::Spots if subj != Subject::Human => {
                 for (dx, dy) in [(-0.2, -0.1), (0.15, 0.0), (0.0, 0.2)] {
                     b.add("spot", Group::Body, 2, oval(body_c[0] + body_c[2] * dx, body_c[1] + body_c[3] * dy, 0.04, 0.03, 15.0), fc(pal.shade)).clip = Some("body");
                 }
             }
-            Feature::Stripes => {
+            Feature::Stripes if subj != Subject::Human => {
                 for k in 0..4 {
                     let x = body_c[0] - body_c[2] * 0.3 + body_c[2] * 0.2 * k as f32;
                     b.add("stripe", Group::Body, 2, limb(x, body_c[1] - body_c[3] * 0.5, x - 0.03, body_c[1] + body_c[3] * 0.3, 0.035, 0.02), fc(pal.shade)).clip = Some("body");
@@ -756,6 +896,37 @@ mod tests {
         let head = f.parts.iter().find(|p| p.role == "head").unwrap().shape.bbox();
         let feet = f.feet_y;
         assert!((head.3 - head.1) / (feet - head.1) < 0.2);
+    }
+
+    #[test]
+    fn a_character_name_stands_for_its_description() {
+        let cfg = Config::load(None).unwrap();
+        let (s, who) = crate::expand_characters("Winston Black, walking", &cfg);
+        assert_eq!(who.as_deref(), Some("winston black"));
+        assert!(s.contains("claw arm") && s.ends_with(", walking"));
+        let f = fig(&s);
+        assert_eq!(f.gait, Gait::Biped);
+        for role in ["coat", "lapel", "shirt_stripe", "belt", "buckle", "boot", "claw_hand", "talon", "hair"] {
+            assert!(f.parts.iter().any(|p| p.role == role), "{role}");
+        }
+        // the left hand is in the pocket, the right is a claw: no human hands drawn
+        assert!(!f.parts.iter().any(|p| p.role == "hand"));
+    }
+
+    #[test]
+    fn a_plain_person_gets_everyday_clothes() {
+        let f = fig("a man");
+        assert!(f.parts.iter().filter(|p| p.role == "hand").count() == 2);
+        assert!(!f.parts.iter().any(|p| p.role == "coat" || p.role == "talon"));
+    }
+
+    #[test]
+    fn clothes_are_for_people() {
+        let cfg = Config::load(None).unwrap();
+        let req = crate::parser::parse("a slime with a coat", false).unwrap();
+        let mut chosen = Chosen::new();
+        chosen.insert("realism", "cartoon");
+        assert!(crate::figure::build(&req, &cfg, &chosen).err().unwrap().contains("clothes are for people"));
     }
 
     #[test]

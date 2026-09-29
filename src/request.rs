@@ -14,18 +14,19 @@ macro_rules! kinds {
 kinds!(Subject {
     Slime = "slime", Ghost = "ghost", Bat = "bat", Cat = "cat", Frog = "frog", Knight = "knight",
     Robot = "robot", Coin = "coin", Gem = "gem", Star = "star", Heart = "heart", Potion = "potion",
-    Mushroom = "mushroom",
+    Mushroom = "mushroom", Human = "human",
 });
 kinds!(Color {
     Red = "red", Orange = "orange", Yellow = "yellow", Green = "green", Blue = "blue", Purple = "purple",
     Pink = "pink", Black = "black", White = "white", Grey = "grey", Brown = "brown", Gold = "gold",
-    Silver = "silver", Teal = "teal",
+    Silver = "silver", Teal = "teal", Cream = "cream", Skin = "skin",
 });
 kinds!(Tone { Light = "light", Dark = "dark" });
 kinds!(Feature {
     Eyes = "eyes", BigEyes = "big eyes", SmallEyes = "small eyes", OneEye = "one eye", Angry = "angry", Sleepy = "sleepy",
     Happy = "happy", Fangs = "fangs", Horns = "horns", Ears = "ears", Wings = "wings", Crown = "crown",
     Hat = "hat", Antenna = "antenna", Tail = "tail", Spots = "spots", Stripes = "stripes",
+    Hair = "hair", Coat = "coat", Shirt = "shirt", Trousers = "trousers", Boots = "boots", Belt = "belt", Claw = "claw",
 });
 kinds!(Anim { Idle = "idle", Bounce = "bounce", Walk = "walk", Fly = "fly", Spin = "spin", Float = "float", Blink = "blink", Hurt = "hurt" });
 kinds!(Mod { Cute = "cute", Spooky = "spooky", Simple = "simple", Detailed = "detailed" });

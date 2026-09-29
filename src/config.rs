@@ -32,6 +32,8 @@ pub struct Config {
     pub anatomy: BTreeMap<String, BTreeMap<String, Vec<f32>>>,
     /// realistic eye (iris) colour per subject
     pub anatomy_iris: BTreeMap<String, String>,
+    /// named characters: a name in a sentence stands for this description
+    pub characters: BTreeMap<String, String>,
     pub shading: Shading,
     pub checks: Checks,
     pub output: Output,
@@ -65,6 +67,8 @@ pub struct Sizes {
     pub huge: u32,
     /// a realistic sprite with no size asked for (anatomy needs pixels)
     pub realistic: u32,
+    /// a person with no size asked for (a full figure needs height)
+    pub person: u32,
     pub min: u32,
     pub max: u32,
 }
@@ -163,6 +167,10 @@ pub struct RealismCfg {
     pub deep_value: f32,
     pub spec_value: f32,
     pub spec_saturation: f32,
+    /// clothes are dyed cloth: saturation of a named clothing colour
+    pub cloth_saturation: f32,
+    /// and its value (dyed cloth is darker than paint)
+    pub cloth_value: f32,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -277,7 +285,7 @@ impl Config {
             }
         }
         for s in Subject::ALL {
-            if !self.shapes.subjects.contains_key(s.name()) {
+            if !crate::anatomy::ANATOMY_ONLY.contains(s) && !self.shapes.subjects.contains_key(s.name()) {
                 bail!("missing [shapes.{}]", s.name());
             }
             let c = self.default_color.get(s.name()).ok_or_else(|| anyhow!("missing default_color.{}", s.name()))?;
@@ -346,6 +354,7 @@ impl Config {
     pub fn size_of(&self, r: &crate::request::Request) -> u32 {
         use crate::request::SizeReq;
         match r.size.as_ref().map(|s| s.v) {
+            None if r.subject.v == crate::request::Subject::Human => self.sizes.person,
             None if r.realism.as_ref().map(|x| x.v) == Some(crate::request::Realism::Realistic) => self.sizes.realistic,
             None => self.sizes.default,
             Some(SizeReq::Px(n)) => n,

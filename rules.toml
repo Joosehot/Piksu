@@ -26,6 +26,7 @@ big = 24
 large = 32
 huge = 48
 realistic = 32     # "realistic" with no size: anatomy needs room
+person = 48        # a person with no size: a full figure needs height
 min = 8
 max = 64
 
@@ -124,6 +125,8 @@ brown = [0.58, 0.38, 0.22]
 gold = [0.95, 0.75, 0.2]
 silver = [0.78, 0.8, 0.86]
 teal = [0.2, 0.72, 0.7]
+cream = [0.93, 0.9, 0.8]
+skin = [0.88, 0.68, 0.55]
 
 [tones]
 light = 1.2    # "light green": value x this, saturation x 0.8
@@ -144,6 +147,7 @@ star = "yellow"
 heart = "red"
 potion = "pink"
 mushroom = "red"
+human = "skin"
 
 # ---------------------------------------------------------------- shapes
 # body = [centre x, centre y, width, height] of the main body, per body variant.
@@ -318,6 +322,8 @@ saturation = { cartoon = 1.0, stylized = 0.92, realistic = 0.78 }
 deep_value = 0.48
 spec_value = 1.35
 spec_saturation = 0.5
+cloth_saturation = 0.55   # "dark green trousers" are dyed cloth, not paint
+cloth_value = 0.72
 
 # texture strength per material (realistic only; stylized gets half)
 [materials]
@@ -390,12 +396,24 @@ neck = [0.16, 0.18]
 cap = [0.5, 0.4, 0.66, 0.3]
 stem = [0.2, 0.42]
 
+[anatomy.human]
+body = [0.5, 0.32, 0.22, 0.26]    # the torso, shoulders to hips
+head = [0.5, 0.11, 0.1, 0.125]    # ~7 heads tall; a touch big so a face fits in pixels
+leg = [0.08, 0.43]
+arm = [0.065, 0.33]
+
 [anatomy_iris]
 cat = "green"
 frog = "gold"
 knight = "brown"
 robot = "teal"
 slime = "black"
+
+# ---------------------------------------------------------------- characters
+# A name in a sentence stands for its description; the rest of the sentence still applies
+# ("winston black, walking"). Descriptions use only the vocabulary.
+[characters]
+"winston black" = "a realistic man with black hair, a long brown coat, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm"
 
 [shading]
 shade_cut = 0.45       # top_light: (x + y) past this, in the part's own -1..1 box, is shade

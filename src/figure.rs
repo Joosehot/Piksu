@@ -135,7 +135,7 @@ pub fn material_of(s: Subject) -> Material {
         Subject::Frog | Subject::Mushroom | Subject::Heart => Material::Skin,
         Subject::Knight | Subject::Robot | Subject::Coin | Subject::Star => Material::Metal,
         Subject::Slime | Subject::Potion => Material::Gel,
-        Subject::Ghost => Material::Cloth,
+        Subject::Ghost | Subject::Human => Material::Cloth,
         Subject::Gem => Material::Stone,
     }
 }
@@ -208,7 +208,7 @@ pub struct Figure {
     pub why: Vec<(String, String)>,
 }
 
-fn color_of(cfg: &Config, c: Color, tone: Option<Tone>) -> Rgb {
+pub fn color_of(cfg: &Config, c: Color, tone: Option<Tone>) -> Rgb {
     let base = cfg.colors[c.name()];
     match tone {
         Some(Tone::Light) => adjust(base, cfg.tones.light, 0.8, 0.0),
@@ -241,15 +241,12 @@ impl<'a> B<'a> {
     }
 }
 
+/// Features that only a person can wear.
+pub const CLOTHES: &[Feature] = &[Feature::Hair, Feature::Coat, Feature::Shirt, Feature::Trousers, Feature::Boots, Feature::Belt, Feature::Claw];
+
 pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, String> {
     let subj = req.subject.v;
-    let shapes = &cfg.shapes.subjects[subj.name()];
     let variant = chosen.get("body").copied().unwrap_or("round");
-    let [cx, cy, w, h] = match variant {
-        "tall" => shapes.tall,
-        "wide" => shapes.wide,
-        _ => shapes.round,
-    };
     let mut why = vec![("body".to_string(), format!("body/{variant} (the {})", req.subject.words))];
     why.push(("material".to_string(), format!("{:?} (a {} is made of it)", material_of(subj), subj.name()).to_lowercase()));
 
@@ -287,9 +284,24 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         ramp,
         outline_value: pr.outline_value,
     };
-    if realism == "realistic" {
+    // clothes are for people
+    for f in &req.features {
+        if CLOTHES.contains(&f.feature.v) && subj != Subject::Human {
+            return Err(format!("\"{}\": clothes are for people; try \"a human with {}\"", f.feature.words, f.feature.words));
+        }
+    }
+    if realism == "realistic" || crate::anatomy::ANATOMY_ONLY.contains(&subj) {
+        if realism != "realistic" {
+            why.push(("anatomy".into(), format!("a {} is always drawn with real anatomy", subj.name())));
+        }
         return crate::anatomy::build(req, cfg, chosen, pal, why);
     }
+    let shapes = &cfg.shapes.subjects[subj.name()];
+    let [cx, cy, w, h] = match variant {
+        "tall" => shapes.tall,
+        "wide" => shapes.wide,
+        _ => shapes.round,
+    };
     let feature_color = |f: Feature, default: Rgb| -> Rgb { req.has(f).and_then(|x| x.color.as_ref()).map(|c| color_of(cfg, c.v.0, c.v.1)).unwrap_or(default) };
 
     let mut b = B { parts: vec![], cfg };
@@ -312,6 +324,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
     }
 
     match subj {
+        Subject::Human => unreachable!("drawn by anatomy"),
         Subject::Slime => body!(Shape::Egg { cx, cy: top + 0.62 * h, rx: w / 2.0, ry_top: 0.62 * h, ry_bottom: 0.38 * h }),
         Subject::Ghost => {
             let r = w / 2.0;
