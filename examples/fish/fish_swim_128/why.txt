@@ -1,0 +1,17 @@
+a fish, swimming
+
+body               body/round (the fish)
+material           scales (a fish is made of it)
+colour             default for a fish (blue)
+mouth              mouth/none (at the snout, side view)
+eyes               eyes/shine (one eye: side view)
+anatomy            a fish from the side, facing right (rules.toml [anatomy.fish], [fish.fish])
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/shine (scored best for the profile; a fish has a face)
+mouth              mouth/none (scored best for the profile; a fish has a face)
+timing             timing/eased (scored best for the profile; swimming)
+animation swim     "swimming"

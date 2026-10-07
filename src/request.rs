@@ -15,11 +15,12 @@ kinds!(Subject {
     Slime = "slime", Ghost = "ghost", Bat = "bat", Cat = "cat", Frog = "frog", Knight = "knight",
     Robot = "robot", Coin = "coin", Gem = "gem", Star = "star", Heart = "heart", Potion = "potion",
     Mushroom = "mushroom", Human = "human", Dog = "dog",
+    Fish = "fish", Perch = "perch", Roach = "roach", Pike = "pike", Hook = "hook",
 });
 kinds!(Color {
     Red = "red", Orange = "orange", Yellow = "yellow", Green = "green", Blue = "blue", Purple = "purple",
     Pink = "pink", Black = "black", White = "white", Grey = "grey", Brown = "brown", Gold = "gold",
-    Silver = "silver", Teal = "teal", Cream = "cream", Skin = "skin",
+    Silver = "silver", Teal = "teal", Cream = "cream", Skin = "skin", Olive = "olive",
 });
 kinds!(Tone { Light = "light", Dark = "dark" });
 kinds!(Feature {
@@ -27,8 +28,10 @@ kinds!(Feature {
     Happy = "happy", Fangs = "fangs", Horns = "horns", Ears = "ears", Wings = "wings", Crown = "crown",
     Hat = "hat", Antenna = "antenna", Tail = "tail", Spots = "spots", Stripes = "stripes",
     Hair = "hair", Coat = "coat", Shirt = "shirt", Trousers = "trousers", Boots = "boots", Belt = "belt", Claw = "claw",
+    Beanie = "beanie",
 });
-kinds!(Anim { Idle = "idle", Bounce = "bounce", Walk = "walk", Fly = "fly", Spin = "spin", Float = "float", Blink = "blink", Hurt = "hurt" });
+kinds!(Anim { Idle = "idle", Bounce = "bounce", Walk = "walk", Fly = "fly", Spin = "spin", Float = "float", Blink = "blink", Hurt = "hurt",
+    Swim = "swim", Struggle = "struggle" });
 kinds!(Mod { Cute = "cute", Spooky = "spooky", Simple = "simple", Detailed = "detailed" });
 kinds!(Realism { Cartoon = "cartoon", Stylized = "stylized", Realistic = "realistic" });
 kinds!(Style { Outlined = "outlined", NoOutline = "no outline", Flat = "flat", Shaded = "shaded" });

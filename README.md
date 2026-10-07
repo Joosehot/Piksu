@@ -34,7 +34,8 @@ Aras and Droid. No neural network runs at generation time.
 | rules | `src/rules/*.rs` | one decision per file with variants: realism (cartoon / stylized / realistic), body (round / tall / wide), palette (hue-shifted / value-only ramp), shading (flat / top light / rim / lit), outline (dark / coloured / none), eyes (dot / shine / angry / sleepy / visor), mouth (none / smile / open / fangs), timing (linear / eased / snappy) |
 | search | `src/search.rs` | beam search; a variant scores `weight * (1 + axes . (profile - 0.5))` on [cute, readable, detail]; words like "cute", "spooky", "simple", "detailed" shift the profile; judges score combinations (no outline on a tiny canvas, shiny eyes and a smile for "cute", ...) |
 | figure | `src/figure.rs` | the chosen design as coloured parts: body, eyes, mouth, and features (horns, ears, wings, crown, hat, antenna, tail, spots, stripes) |
-| animation | `src/anim.rs` | idle, bounce (squash and stretch), walk (legs), fly (wing flaps), spin, float, blink, hurt (flash and shake), as one seamless loop |
+| fish | `src/fish.rs` | fish and hooks seen from the side at every realism level: one blueprint, more detail the more realistic (fin rays, lateral line, scales) |
+| animation | `src/anim.rs` | idle, bounce (squash and stretch), walk (legs), fly (wing flaps), spin, float, blink, hurt (flash and shake), swim and struggle (fish), as one seamless loop |
 | fit + render | `src/lib.rs`, `src/render.rs` | the figure, with all its motion, is fitted into the canvas with room for the outline, then rasterised pixel by pixel (no anti-aliasing), shaded and outlined |
 | checks | `src/checks.rs` | fits the canvas, no stray pixels, readable coverage, outline and eye contrast, smooth motion between frames (shape change and step size, including last to first), symmetry |
 
@@ -58,13 +59,26 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   `[characters]`: `piksu "Winston Black, walking"`.
 
 - **Subjects:** slime, ghost, bat, cat, dog, frog, knight, robot, coin, gem, star, heart, potion,
-  mushroom and human. A dog and a human are always drawn with real anatomy.
+  mushroom, human, fish, perch, roach, pike and hook. A dog and a human are always drawn with real
+  anatomy.
+- **Fish** (for an ice-fishing game): Finnish lake fish seen from the side, facing right. A perch
+  (ahven) is green-yellow with dark bars, red-orange fins and a spiny first dorsal fin with a black
+  blotch; a roach (särki) is silver with red eyes and reddish fins; a pike (hauki) is long and slim,
+  olive with rows of pale spots, a long flat snout and its dorsal and anal fins far back; "a fish"
+  is a plain blue one. Proportions are in `[anatomy.<fish>]`, colours and markings in
+  `[fish.<fish>]`. `swimming` sweeps the tail, bends the rear of the body and paddles the fins;
+  `struggling` (thrashing, hooked) is a 6-frame loop for a fish fighting the hook: it swings from
+  its gaping mouth, bends hard one way then the other, the tail whips twice per bend and the two
+  hardest pulls flash; idle is a gentle swim in place; hurt flashes and shakes. "a silver hook" is a fishing hook, and "an ice
+  fisherman" is a person in a bobble hat, a long winter coat and boots (`[characters]`).
+  ![fish at 128](examples/fish/showcase.png) ![fish at 32, enlarged 4x](examples/fish/showcase_32.png)
 - **Colours:** red, orange, yellow, green, blue, purple, pink, black, white, grey, brown, gold,
   silver and teal, each optionally light or dark. A colour before a feature colours that feature
   ("red eyes", "a gold crown").
 - **Features:** big / small / one eye, angry, sleepy, happy, fangs, horns, ears, wings, crown,
-  hat, antenna, tail, spots and stripes.
-- **Animations:** idle, bouncing, walking, flying, spinning, floating, blinking and hurt.
+  hat, antenna, tail, spots and stripes; a person also takes a winter hat (beanie).
+- **Animations:** idle, bouncing, walking, flying, spinning, floating, blinking, hurt, swimming and
+  struggling.
   "6 frames" sets the count. A slime can't walk and a coin doesn't fly; you get an error instead
   of a guess.
 - **Sizes:** 128 x 128 is the baseline (a face, a coat's folds and a claw's scales get several
@@ -91,6 +105,9 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
 - `preview.png` is the same sheet enlarged to about 512 pixels.
 - `frames/*.png` holds each frame, and `<animation>.gif` is an animated preview.
 - `droid/*.txt` holds Droid text sprites (a palette, `---`, then pixel rows), ready for a Droid game's `sprites/`.
+- In a game: load `frames/<animation>_<i>.png` (each `size` x `size`, transparent background,
+  frames 0..n-1 of a seamless loop), or cut `sheet.png`: row r is the r-th animation, frame c sits
+  at x = 1 + c * (size + 1), y = 1 + r * (size + 1) (1-pixel padding, `[output] sheet_padding`).
 - `why.txt` maps every piece to the rule and variant that made it and the words that asked for it.
 - `sentence.txt` holds the input.
 

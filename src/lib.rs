@@ -8,6 +8,7 @@ pub mod checks;
 pub mod color;
 pub mod config;
 pub mod figure;
+pub mod fish;
 pub mod lexicon;
 pub mod output;
 pub mod parser;
@@ -72,7 +73,10 @@ fn fit(mut fig: figure::Figure, req: &Request, cfg: &Config, timing: &str, size:
 /// A character's name in the sentence stands for its description from rules.toml [characters].
 pub fn expand_characters(sentence: &str, cfg: &Config) -> (String, Option<String>) {
     let low = sentence.to_lowercase();
-    for (name, desc) in &cfg.characters {
+    // the longest name wins: "ice fisherman" before "fisherman"
+    let mut names: Vec<(&String, &String)> = cfg.characters.iter().collect();
+    names.sort_by_key(|(n, _)| std::cmp::Reverse(n.len()));
+    for (name, desc) in names {
         if let Some(at) = low.find(name.as_str()) {
             let s = format!("{}{}{}", &sentence[..at], desc, &sentence[at + name.len()..]);
             return (s, Some(name.clone()));

@@ -67,7 +67,7 @@ pub const FACE_FEATURES: &[Feature] =
     &[Feature::Eyes, Feature::BigEyes, Feature::SmallEyes, Feature::OneEye, Feature::Angry, Feature::Sleepy, Feature::Happy, Feature::Fangs];
 
 pub fn is_item(s: Subject) -> bool {
-    matches!(s, Subject::Coin | Subject::Gem | Subject::Star | Subject::Heart | Subject::Potion)
+    matches!(s, Subject::Coin | Subject::Gem | Subject::Star | Subject::Heart | Subject::Potion | Subject::Hook)
 }
 
 /// Creatures always have a face; items only when the sentence gives them one (or asks for cute).

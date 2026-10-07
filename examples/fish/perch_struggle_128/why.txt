@@ -1,0 +1,18 @@
+a perch, struggling
+
+body               body/round (the perch)
+material           scales (a perch is made of it)
+colour             default for a perch (olive)
+stripes            a perch has dark bars (rules.toml [fish.perch])
+mouth              mouth/none (at the snout, side view)
+eyes               eyes/shine (one eye: side view)
+anatomy            a perch from the side, facing right (rules.toml [anatomy.perch], [fish.perch])
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/shine (scored best for the profile; a perch has a face)
+mouth              mouth/none (scored best for the profile; a perch has a face)
+timing             timing/eased (scored best for the profile; struggling)
+animation struggle "struggling"

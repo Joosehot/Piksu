@@ -1,0 +1,17 @@
+an ice fisherman, walking
+
+character          "ice fisherman" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt" (rules.toml [characters])
+body               body/round (the man)
+material           cloth (a human is made of it)
+colour             default for a human (skin)
+beanie             "winter hat" (placed on the realistic anatomy)
+anatomy            realistic human (side view for animals, front for figures, three-quarter for objects)
+realism            realism/realistic ("realistic"; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/angry (scored best for the profile; a human has a face)
+mouth              mouth/none (scored best for the profile; a human has a face)
+timing             timing/eased (scored best for the profile; walking)
+animation walk     "walking"

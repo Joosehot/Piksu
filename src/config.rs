@@ -34,6 +34,8 @@ pub struct Config {
     pub anatomy_iris: BTreeMap<String, String>,
     /// named characters: a name in a sentence stands for this description
     pub characters: BTreeMap<String, String>,
+    /// fish: how each kind is coloured and marked, plus numbers shared by all fish
+    pub fish: FishCfg,
     pub shading: Shading,
     pub checks: Checks,
     pub output: Output,
@@ -182,8 +184,49 @@ pub struct Materials {
     pub gel: f32,
     pub cloth: f32,
     pub stone: f32,
+    pub scales: f32,
+    /// scales: the net of scale edges repeats every this many pixels
+    pub scale_px: u32,
+    /// below this canvas size scales are too small to draw, only the noise stays
+    pub scales_min_size: u32,
     pub metal_band: [f32; 2],
     pub gel_core: f32,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct FishCfg {
+    /// where the body bends when it swims (share of the length from the snout)
+    pub bend_at: f32,
+    /// dark bars on a striped fish
+    pub stripes: u32,
+    /// light spots per row on a spotted fish
+    pub spots: u32,
+    /// spines in a spiny dorsal fin
+    pub spines: usize,
+    /// the shading box reaches this share of the depth below the belly (light from above)
+    pub shade_drop: f32,
+    /// fin rays, the gill cover's rim and the lateral line need at least this many pixels
+    pub detail_min_size: u32,
+    #[serde(flatten)]
+    pub kinds: BTreeMap<String, FishLook>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct FishLook {
+    /// the default body colour's value is scaled by this (when the sentence names no colour)
+    pub tone: f32,
+    /// the back is darker: the body colour mixed this much towards `back`
+    pub back: [f32; 3],
+    pub back_mix: f32,
+    pub belly: [f32; 3],
+    /// pelvic, anal and tail fins
+    pub fins: [f32; 3],
+    /// dorsal and pectoral fins
+    pub upper_fins: [f32; 3],
+    /// "none", "stripes" or "spots"
+    pub markings: String,
+    pub mark: [f32; 3],
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -316,6 +359,15 @@ impl Config {
                     bail!("missing anatomy.{subj}.{k}");
                 }
             }
+        }
+        for s in crate::fish::FISH {
+            let l = self.fish.kinds.get(s.name()).ok_or_else(|| anyhow!("missing [fish.{}]", s.name()))?;
+            if !["none", "stripes", "spots"].contains(&l.markings.as_str()) {
+                bail!("fish.{}.markings = {:?}: use \"none\", \"stripes\" or \"spots\"", s.name(), l.markings);
+            }
+        }
+        if self.materials.scale_px < 2 {
+            bail!("materials.scale_px must be at least 2");
         }
         for (subj, c) in &self.anatomy_iris {
             if !self.colors.contains_key(c) {

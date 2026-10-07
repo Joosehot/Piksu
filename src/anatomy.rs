@@ -149,6 +149,11 @@ pub const REQUIRED: &[(&str, &[&str])] = &[
     ("mushroom", &["cap", "stem"]),
     ("human", &["body", "head", "leg", "arm"]),
     ("dog", &["body", "head", "leg", "tail", "ear"]),
+    ("fish", &["body", "profile", "head", "tail", "dorsal", "anal", "fin"]),
+    ("perch", &["body", "profile", "head", "tail", "dorsal", "dorsal2", "anal", "fin"]),
+    ("roach", &["body", "profile", "head", "tail", "dorsal", "anal", "fin"]),
+    ("pike", &["body", "profile", "head", "tail", "dorsal", "anal", "fin"]),
+    ("hook", &["body", "wire"]),
 ];
 
 /// A realistic eye: almond white, coloured iris, pupil (slit, round or wide), one catch-light.
@@ -195,6 +200,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
     let head_c: [f32; 4];
 
     match subj {
+        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook => unreachable!("drawn by fish.rs"),
         Subject::Cat => {
             // side view, facing right
             let bd = d("body");
@@ -1030,8 +1036,27 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
             }
             Feature::Hat => {
                 let c = fc(color("black"));
-                b.solid("brim", Group::Body, 7, oval(hx, htop + hh * 0.05, hw * 0.55, hh * 0.08, 0.0), c, None);
-                b.solid("hat", Group::Body, 7, Shape::Rect { x0: hx - hw * 0.3, y0: htop - hh * 0.55, x1: hx + hw * 0.3, y1: htop + hh * 0.05 }, c, None);
+                // a person's hat sits over the hair
+                let layer = if subj == Subject::Human { 16 } else { 7 };
+                b.solid("brim", Group::Body, layer, oval(hx, htop + hh * 0.05, hw * 0.55, hh * 0.08, 0.0), c, None);
+                b.solid("hat", Group::Body, layer, Shape::Rect { x0: hx - hw * 0.3, y0: htop - hh * 0.55, x1: hx + hw * 0.3, y1: htop + hh * 0.05 }, c, None);
+            }
+            Feature::Beanie => {
+                // a knitted winter hat pulled down to the brows: crown, ribbed cuff, a bobble
+                // knitted wool keeps more of its colour than woven cloth
+                let c = adjust(fc(color("red")), cfg.realism.cloth_value.sqrt(), cfg.realism.cloth_saturation.sqrt(), 0.0);
+                let cuff_y = hy - hh * 0.12;
+                b.solid("beanie", Group::Body, 16, Shape::Egg { cx: hx, cy: cuff_y, rx: hw * 0.7, ry_top: hh * 0.8, ry_bottom: hh * 0.02 }, c, Some((hx - hw * 0.7, cuff_y - hh * 0.8, hx + hw * 0.7, cuff_y)));
+                for k in -2..=2 {
+                    let x = hx + hw * 0.2 * k as f32;
+                    b.add("knit", Group::Body, 17, band(&curve((x, cuff_y - hh * 0.7), (x + hw * 0.03 * k as f32, cuff_y - hh * 0.3), (x + hw * 0.06 * k as f32, cuff_y), 4), 0.005, 0.006), adjust(c, 0.75, 1.0, 0.0)).clip = Some("beanie");
+                }
+                b.solid("beanie_cuff", Group::Body, 17, Shape::Rect { x0: hx - hw * 0.72, y0: cuff_y - hh * 0.2, x1: hx + hw * 0.72, y1: cuff_y + hh * 0.05 }, adjust(c, 0.88, 1.0, 0.0), None);
+                for k in -6..=6 {
+                    let x = hx + hw * 0.095 * k as f32;
+                    b.add("rib", Group::Body, 18, Shape::Rect { x0: x - 0.003, y0: cuff_y - hh * 0.2, x1: x + 0.003, y1: cuff_y + hh * 0.05 }, adjust(c, 0.65, 1.0, 0.0)).clip = Some("beanie_cuff");
+                }
+                b.solid("bobble", Group::Body, 17, blob(hx, cuff_y - hh * 0.82, hh * 0.13, hh * 0.11, &[(30.0, 0.1), (150.0, 0.12), (260.0, 0.08)]), mix(color("white"), c, 0.15), None);
             }
             Feature::Antenna => {
                 b.detail("antenna", Group::Body, -1, limb(hx, htop + hh * 0.05, hx + hw * 0.1, htop - hh * 0.5, 0.02, 0.015), color("grey"));
@@ -1062,7 +1087,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
         body: body_c,
         feet_y,
         symmetric,
-        has_legs: gait != Gait::None,
+        has_legs: !matches!(gait, Gait::None | Gait::Swim),
         has_wings,
         has_eyes,
         material: material_of(subj),

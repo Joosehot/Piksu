@@ -44,6 +44,10 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
             (Show::EyesOpen, true) | (Show::EyesClosed, false) => continue,
             _ => {}
         }
+        match (part.show, frame.mouth_open) {
+            (Show::MouthOpen, false) | (Show::MouthShut, true) => continue,
+            _ => {}
+        }
         let gx = frame.groups.get(&part.group).copied().unwrap_or_default();
         let (bx0, by0, bx1, by1) = part.shade_box.unwrap_or_else(|| part.shape.bbox());
         let (mx, my, hx, hy) = ((bx0 + bx1) / 2.0, (by0 + by1) / 2.0, ((bx1 - bx0) / 2.0).max(1e-4), ((by1 - by0) / 2.0).max(1e-4));
@@ -60,7 +64,7 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
                 let (nx, ny) = ((q.0 - mx) / hx, (q.1 - my) / hy);
                 let diag = nx + ny;
                 match style.shading {
-                    "lit" => c = lit(fig, part.color, nx, ny, x, y, cfg),
+                    "lit" => c = lit(fig, part.color, nx, ny, x, y, size, cfg),
                     "rim" => {
                         let r = (nx * nx + ny * ny).sqrt();
                         if r > sh.rim_band {
@@ -108,9 +112,9 @@ pub fn render(fig: &Figure, frame: &FrameState, size: u32, style: &Style, cfg: &
         }
     }
     outline(&mut g, fig, style.outline);
-    if frame.flash {
+    if frame.flash > 0.0 {
         for p in g.px.iter_mut().flatten() {
-            *p = mix(*p, [1.0, 1.0, 1.0], 0.7);
+            *p = mix(*p, [1.0, 1.0, 1.0], frame.flash);
         }
     }
     g
@@ -128,7 +132,8 @@ const BAYER: [[f32; 4]; 4] = [[0.0, 8.0, 2.0, 10.0], [12.0, 4.0, 14.0, 6.0], [3.
 
 /// Directional light on a rounded surface, in five tones, with material texture.
 /// `nx`, `ny` are the pixel's position in the part's own box (-1..1, y down).
-fn lit(fig: &Figure, base: Rgb, nx: f32, ny: f32, x: u32, y: u32, cfg: &Config) -> Rgb {
+#[allow(clippy::too_many_arguments)]
+fn lit(fig: &Figure, base: Rgb, nx: f32, ny: f32, x: u32, y: u32, size: u32, cfg: &Config) -> Rgb {
     use crate::figure::Material;
     let l = &cfg.lighting;
     let len = (l.direction[0].powi(2) + l.direction[1].powi(2) + l.direction[2].powi(2)).sqrt();
@@ -149,6 +154,16 @@ fn lit(fig: &Figure, base: Rgb, nx: f32, ny: f32, x: u32, y: u32, cfg: &Config) 
         Material::Cloth => i += m.cloth * strength * noise(x, y / 3, 3),
         Material::Stone => i += m.stone * strength * noise(x, y, 4),
         Material::Gel => i += m.gel_core * strength * (1.0 - r2).max(0.0) + m.gel * strength * noise(x, y, 5),
+        Material::Scales => {
+            i += m.skin * strength * noise(x / 2, y / 2, 7);
+            // a net of scale edges: two diagonal sets of lines, wide enough apart to read
+            if size >= m.scales_min_size {
+                let k = m.scale_px;
+                if (x + y).is_multiple_of(k) || (x + size * k - y).is_multiple_of(k) {
+                    i -= m.scales * strength;
+                }
+            }
+        }
         Material::Metal => {
             if nx > m.metal_band[0] && nx < m.metal_band[1] {
                 i += 0.25 * strength.max(0.5);

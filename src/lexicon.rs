@@ -62,6 +62,21 @@ fn table() -> Vec<(&'static str, Tok)> {
         ("cowboy", T::Subject(Subject::Human)),
         ("gunslinger", T::Subject(Subject::Human)),
         ("stranger", T::Subject(Subject::Human)),
+        // fish (Finnish lake fish, seen from the side) and the gear to catch them
+        ("fishes", T::Subject(Subject::Fish)),
+        ("kala", T::Subject(Subject::Fish)),
+        ("minnow", T::Subject(Subject::Fish)),
+        ("perches", T::Subject(Subject::Perch)),
+        ("ahven", T::Subject(Subject::Perch)),
+        ("roaches", T::Subject(Subject::Roach)),
+        ("särki", T::Subject(Subject::Roach)),
+        ("sarki", T::Subject(Subject::Roach)),
+        ("northern pike", T::Subject(Subject::Pike)),
+        ("pickerel", T::Subject(Subject::Pike)),
+        ("hauki", T::Subject(Subject::Pike)),
+        ("fishhook", T::Subject(Subject::Hook)),
+        ("fish hook", T::Subject(Subject::Hook)),
+        ("fishing hook", T::Subject(Subject::Hook)),
         ("gray", T::Color(Color::Grey)),
         ("golden", T::Color(Color::Gold)),
         ("violet", T::Color(Color::Purple)),
@@ -124,6 +139,14 @@ fn table() -> Vec<(&'static str, Tok)> {
         ("jeans", T::Feature(Feature::Trousers)),
         ("boots", T::Feature(Feature::Boots)),
         ("belt", T::Feature(Feature::Belt)),
+        ("beanie", T::Feature(Feature::Beanie)),
+        ("winter hat", T::Feature(Feature::Beanie)),
+        ("wool hat", T::Feature(Feature::Beanie)),
+        ("woolly hat", T::Feature(Feature::Beanie)),
+        ("knit cap", T::Feature(Feature::Beanie)),
+        ("knitted hat", T::Feature(Feature::Beanie)),
+        ("bobble hat", T::Feature(Feature::Beanie)),
+        ("toque", T::Feature(Feature::Beanie)),
         ("claw", T::Feature(Feature::Claw)),
         ("claws", T::Feature(Feature::Claw)),
         ("claw arm", T::Feature(Feature::Claw)),
@@ -165,6 +188,16 @@ fn table() -> Vec<(&'static str, Tok)> {
         ("hurt", T::Anim(Anim::Hurt)),
         ("getting hit", T::Anim(Anim::Hurt)),
         ("damaged", T::Anim(Anim::Hurt)),
+        ("swim", T::Anim(Anim::Swim)),
+        ("swims", T::Anim(Anim::Swim)),
+        ("swimming", T::Anim(Anim::Swim)),
+        ("struggle", T::Anim(Anim::Struggle)),
+        ("struggles", T::Anim(Anim::Struggle)),
+        ("struggling", T::Anim(Anim::Struggle)),
+        ("thrashing", T::Anim(Anim::Struggle)),
+        ("wriggling", T::Anim(Anim::Struggle)),
+        ("flopping", T::Anim(Anim::Struggle)),
+        ("hooked", T::Anim(Anim::Struggle)),
         // mood
         ("cute", T::Mod(Mod::Cute)),
         ("adorable", T::Mod(Mod::Cute)),
@@ -386,6 +419,19 @@ mod tests {
     fn longest_phrase_wins() {
         assert_eq!(toks("big eyes"), vec![Tok::Feature(Feature::BigEyes)]);
         assert_eq!(toks("big slime"), vec![Tok::SizeWord("big"), Tok::Subject(Subject::Slime)]);
+    }
+
+    #[test]
+    fn fish_words() {
+        assert_eq!(toks("a perch"), vec![Tok::Filler, Tok::Subject(Subject::Perch)]);
+        assert_eq!(toks("ahven"), vec![Tok::Subject(Subject::Perch)]);
+        assert_eq!(toks("särki"), vec![Tok::Subject(Subject::Roach)]);
+        assert_eq!(toks("a northern pike"), vec![Tok::Filler, Tok::Subject(Subject::Pike)]);
+        // the longer phrase wins: a fish hook is a hook, not a fish and a hook
+        assert_eq!(toks("fish hook"), vec![Tok::Subject(Subject::Hook)]);
+        assert_eq!(toks("swimming"), vec![Tok::Anim(Anim::Swim)]);
+        assert_eq!(toks("struggling"), vec![Tok::Anim(Anim::Struggle)]);
+        assert_eq!(toks("a winter hat"), vec![Tok::Filler, Tok::Feature(Feature::Beanie)]);
     }
 
     #[test]

@@ -127,6 +127,7 @@ silver = [0.78, 0.8, 0.86]
 teal = [0.2, 0.72, 0.7]
 cream = [0.93, 0.9, 0.8]
 skin = [0.88, 0.68, 0.55]
+olive = [0.6, 0.66, 0.24]
 
 [tones]
 light = 1.2    # "light green": value x this, saturation x 0.8
@@ -149,6 +150,11 @@ potion = "pink"
 mushroom = "red"
 human = "skin"
 dog = "brown"
+fish = "blue"
+perch = "olive"
+roach = "silver"
+pike = "olive"
+hook = "silver"
 
 # ---------------------------------------------------------------- shapes
 # body = [centre x, centre y, width, height] of the main body, per body variant.
@@ -254,6 +260,40 @@ eyes_y = 0.34           # the face is on the stem
 stem_w = 0.36
 stem_h = 0.36
 
+# Fish face right in side view at every realism level. Cartoon and stylized fish take the body
+# box from here: [centre x, centre y, length snout to tail root, depth]; the fins and the head
+# come from [anatomy.<fish>]. eyes_y is not used (the eye sits on the head).
+[shapes.fish]
+round = [0.5, 0.5, 0.68, 0.3]
+tall = [0.5, 0.5, 0.62, 0.34]
+wide = [0.5, 0.5, 0.74, 0.26]
+eyes_y = 0.0
+
+[shapes.perch]
+round = [0.5, 0.5, 0.7, 0.29]
+tall = [0.5, 0.5, 0.64, 0.32]
+wide = [0.5, 0.5, 0.74, 0.27]
+eyes_y = 0.0
+
+[shapes.roach]
+round = [0.5, 0.5, 0.7, 0.27]
+tall = [0.5, 0.5, 0.64, 0.3]
+wide = [0.5, 0.5, 0.74, 0.24]
+eyes_y = 0.0
+
+[shapes.pike]
+round = [0.5, 0.5, 0.82, 0.17]
+tall = [0.5, 0.5, 0.78, 0.19]
+wide = [0.5, 0.5, 0.86, 0.15]
+eyes_y = 0.0
+
+# a hook hangs from its eye: [centre x, centre y, width of the bend, height]
+[shapes.hook]
+round = [0.5, 0.5, 0.42, 0.8]
+tall = [0.5, 0.5, 0.36, 0.84]
+wide = [0.5, 0.5, 0.5, 0.74]
+eyes_y = 0.0
+
 # ---------------------------------------------------------------- features
 [features]
 horn_h = 0.2
@@ -271,6 +311,7 @@ wing_span = 0.3        # wings added to a subject that has none
 [animations.idle]
 frames = 6
 bob = 0.03
+fish = 0.4         # an idle fish hovers in place: its swim at this share of the amplitude
 
 [animations.bounce]
 frames = 8
@@ -307,6 +348,30 @@ closed_frame = 3
 [animations.hurt]
 frames = 4
 shake = 0.05
+flash = 0.7        # every other frame is washed this far towards white
+
+# a fish swimming in place: the tail sweeps, the body behind `fish.bend_at` bends with it, the
+# head answers a little the other way, the pectoral fins paddle
+[animations.swim]
+frames = 8
+tail = 16.0        # degrees the tail fin turns at the tail root
+body = 4.0         # degrees the rear of the body bends
+head = 1.2         # degrees the whole fish turns against the bend
+fin = 26.0         # degrees the pectoral fin paddles (the pelvic fin half of it)
+lag = 0.15         # the tail follows the body this share of a loop later
+bob = 0.012
+
+# a hooked fish thrashing: it swings from the mouth and bends into a C, one way then the other
+[animations.struggle]
+frames = 6
+thrash = 14.0      # degrees the fish swings around its mouth
+body = 34.0        # degrees the rear bends against the swing
+tail = 36.0        # the tail whips twice per bend
+fin = 45.0
+lag = 0.1
+flash = 0.2        # the hardest pulls are washed this far towards white
+flash_at = 0.95    # ... the frames where the bend is at least this share of its full swing
+max_change = 0.55  # thrashing reshapes the silhouette more than walking
 
 [timing]
 snappy_hold = 0.3      # fraction of the cycle held at each extreme
@@ -334,6 +399,9 @@ metal = 0.05
 gel = 0.05
 cloth = 0.06
 stone = 0.04
+scales = 0.09                     # scales: the net of scale edges darkens this much
+scale_px = 4
+scales_min_size = 48
 metal_band = [-0.5, -0.22]        # metal: a bright vertical streak between these x positions (-1..1)
 gel_core = 0.12                   # gel: glow added in the middle
 
@@ -404,6 +472,60 @@ neck = [0.16, 0.18]
 cap = [0.5, 0.4, 0.66, 0.3]
 stem = [0.2, 0.42]
 
+# Fish: body = [centre x, centre y, length snout to tail root, depth]. The rest are shares of
+# the body: t runs from the snout (0) to the tail root (1); heights are shares of the depth.
+#   profile = [back's highest point t, belly's lowest point t, snout taper (0.5 round, >1 pointed),
+#              depth at the tail root, share of the depth above the midline, depth at the snout tip]
+#   head    = [head length (gill cover) t, eye radius, mouth length t, eye along the head,
+#              eye height (0 midline, 1 the back)]
+#   tail    = [length (share of length), height (share of depth), fork depth (0 square, 1 split)]
+#   dorsal  = [from t, to t, height, spiny (1 = a row of spines), height at its rear]
+#   dorsal2 = a second (soft) dorsal fin [from t, to t, height, height at its rear]
+#   anal    = [from t, to t, height, height at its rear]
+#   fin     = [pectoral length, pelvic length (shares of length), pelvic position t]
+[anatomy.fish]
+body = [0.5, 0.5, 0.68, 0.24]
+profile = [0.4, 0.45, 0.7, 0.3, 0.53, 0.24]
+head = [0.24, 0.13, 0.07, 0.4, 0.4]
+tail = [0.24, 1.0, 0.4]
+dorsal = [0.38, 0.56, 0.6, 0.0, 0.4]
+anal = [0.7, 0.84, 0.36, 0.45]
+fin = [0.16, 0.12, 0.46]
+
+[anatomy.perch]
+body = [0.5, 0.5, 0.7, 0.26]
+profile = [0.4, 0.46, 0.72, 0.3, 0.57, 0.3]
+head = [0.29, 0.12, 0.13, 0.4, 0.42]
+tail = [0.24, 0.95, 0.3]
+dorsal = [0.29, 0.6, 0.52, 1.0, 0.42]
+dorsal2 = [0.63, 0.85, 0.42, 0.42]
+anal = [0.69, 0.84, 0.42, 0.45]
+fin = [0.17, 0.17, 0.35]
+
+[anatomy.roach]
+body = [0.5, 0.5, 0.7, 0.24]
+profile = [0.42, 0.46, 0.6, 0.28, 0.55, 0.22]
+head = [0.23, 0.14, 0.05, 0.42, 0.32]
+tail = [0.26, 1.05, 0.45]
+dorsal = [0.43, 0.6, 0.7, 0.0, 0.32]
+anal = [0.7, 0.85, 0.4, 0.4]
+fin = [0.15, 0.13, 0.46]
+
+[anatomy.pike]
+body = [0.5, 0.5, 0.82, 0.165]
+profile = [0.6, 0.55, 1.0, 0.55, 0.48, 0.32]
+head = [0.31, 0.17, 0.2, 0.68, 0.6]
+tail = [0.17, 1.7, 0.3]
+dorsal = [0.72, 0.92, 0.72, 0.0, 0.9]
+anal = [0.74, 0.92, 0.6, 0.85]
+fin = [0.11, 0.1, 0.57]
+
+# a hook: body = [centre x, centre y, width of the bend, height];
+# wire = [thickness, eye radius, barb length] (shares of the height)
+[anatomy.hook]
+body = [0.5, 0.5, 0.42, 0.8]
+wire = [0.1, 0.075, 0.16]
+
 [anatomy.human]
 body = [0.5, 0.315, 0.2, 0.25]    # the torso, shoulders to hips
 head = [0.5, 0.105, 0.085, 0.115] # about 7.5 heads tall
@@ -418,11 +540,69 @@ robot = "teal"
 slime = "black"
 human = "brown"
 dog = "brown"
+fish = "silver"
+perch = "gold"
+roach = "red"
+pike = "gold"
+
+# ---------------------------------------------------------------- fish
+# Colours of each kind (the body colour is default_color, or the sentence's). Fins and markings
+# keep their colours when the body is recoloured: a perch is known by its red fins.
+[fish]
+bend_at = 0.5
+stripes = 7
+spots = 9
+spines = 12
+shade_drop = 0.6
+detail_min_size = 48
+
+[fish.fish]
+tone = 1.0
+back = [0.12, 0.2, 0.42]
+back_mix = 0.55
+belly = [0.92, 0.94, 0.97]
+fins = [0.56, 0.66, 0.84]
+upper_fins = [0.45, 0.56, 0.78]
+markings = "none"
+mark = [0.12, 0.18, 0.36]
+
+[fish.perch]
+tone = 1.0
+back = [0.2, 0.28, 0.1]
+back_mix = 0.45
+belly = [0.95, 0.92, 0.76]
+fins = [0.95, 0.36, 0.12]
+upper_fins = [0.58, 0.6, 0.42]
+markings = "stripes"
+mark = [0.07, 0.09, 0.05]
+
+[fish.roach]
+tone = 1.0
+back = [0.16, 0.26, 0.34]
+back_mix = 0.7
+belly = [0.97, 0.97, 0.98]
+fins = [0.92, 0.32, 0.2]
+upper_fins = [0.56, 0.44, 0.42]
+markings = "none"
+mark = [0.3, 0.36, 0.42]
+
+[fish.pike]
+tone = 0.82
+back = [0.14, 0.2, 0.09]
+back_mix = 0.6
+belly = [0.92, 0.91, 0.78]
+fins = [0.78, 0.46, 0.2]
+upper_fins = [0.52, 0.48, 0.22]
+markings = "spots"
+mark = [0.9, 0.88, 0.52]
 
 # ---------------------------------------------------------------- characters
 # A name in a sentence stands for its description; the rest of the sentence still applies
 # ("winston black, walking"). Descriptions use only the vocabulary.
 [characters]
+"ice fisherman" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
+"fisherman" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
+"ice angler" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
 "winston black" = "a realistic man with black hair, a long brown coat, green eyes, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm"
 
 [shading]

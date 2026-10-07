@@ -23,6 +23,10 @@ pub enum Group {
     LegFR,
     LegBL,
     LegBR,
+    /// fish: the rear of the body (it bends when the fish swims), the pectoral and pelvic fins
+    Rear,
+    Fin,
+    Fin2,
 }
 
 /// How a figure walks.
@@ -37,6 +41,8 @@ pub enum Gait {
     Quadruped,
     /// a crouch and a leap with the hind legs
     Hop,
+    /// no legs: a fish's tail sweeps, its body bends and its fins paddle
+    Swim,
 }
 
 #[derive(Clone, Debug)]
@@ -98,6 +104,9 @@ pub enum Show {
     Always,
     EyesOpen,
     EyesClosed,
+    /// only while a fish gapes (struggling), or only while it doesn't
+    MouthOpen,
+    MouthShut,
 }
 
 #[derive(Clone, Debug)]
@@ -127,6 +136,8 @@ pub enum Material {
     Gel,
     Cloth,
     Stone,
+    /// a fish's flank: a net of scale edges
+    Scales,
 }
 
 pub fn material_of(s: Subject) -> Material {
@@ -137,6 +148,8 @@ pub fn material_of(s: Subject) -> Material {
         Subject::Slime | Subject::Potion => Material::Gel,
         Subject::Ghost | Subject::Human => Material::Cloth,
         Subject::Gem => Material::Stone,
+        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike => Material::Scales,
+        Subject::Hook => Material::Metal,
     }
 }
 
@@ -242,7 +255,7 @@ impl<'a> B<'a> {
 }
 
 /// Features that only a person can wear.
-pub const CLOTHES: &[Feature] = &[Feature::Hair, Feature::Coat, Feature::Shirt, Feature::Trousers, Feature::Boots, Feature::Belt, Feature::Claw];
+pub const CLOTHES: &[Feature] = &[Feature::Hair, Feature::Coat, Feature::Shirt, Feature::Trousers, Feature::Boots, Feature::Belt, Feature::Claw, Feature::Beanie];
 
 pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, String> {
     let subj = req.subject.v;
@@ -260,7 +273,11 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         None => {
             let d = &cfg.default_color[subj.name()];
             why.push(("colour".into(), format!("default for a {} ({d})", subj.name())));
-            named(cfg, d)
+            match cfg.fish.kinds.get(subj.name()) {
+                // a pike is a darker olive than a perch
+                Some(look) => adjust(named(cfg, d), look.tone, 1.0, 0.0),
+                None => named(cfg, d),
+            }
         }
     };
     // natural colours are less saturated
@@ -289,6 +306,11 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
         if CLOTHES.contains(&f.feature.v) && subj != Subject::Human {
             return Err(format!("\"{}\": clothes are for people; try \"a human with {}\"", f.feature.words, f.feature.words));
         }
+    }
+    // fish and hooks are seen from the side at every realism level: one blueprint, more detail
+    // the more realistic it is
+    if crate::fish::is_fish(subj) || subj == Subject::Hook {
+        return crate::fish::build(req, cfg, chosen, pal, why);
     }
     if realism == "realistic" || crate::anatomy::ANATOMY_ONLY.contains(&subj) {
         if realism != "realistic" {
@@ -325,6 +347,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
 
     match subj {
         Subject::Human | Subject::Dog => unreachable!("drawn by anatomy"),
+        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook => unreachable!("drawn by fish.rs"),
         Subject::Slime => body!(Shape::Egg { cx, cy: top + 0.62 * h, rx: w / 2.0, ry_top: 0.62 * h, ry_bottom: 0.38 * h }),
         Subject::Ghost => {
             let r = w / 2.0;

@@ -1,0 +1,11 @@
+a small silver hook
+
+body               body/round (the hook)
+material           metal (a hook is made of it)
+colour             "silver hook"
+anatomy            a hook hanging from its eye: shank, bend, point and barb (rules.toml [anatomy.hook])
+realism            realism/stylized (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/value_only (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/dark (scored best for the profile; every sprite has an edge)
