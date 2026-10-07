@@ -97,8 +97,9 @@ pub fn run(fig: &Figure, anims: &[(String, Vec<Grid>)], chosen_eyes: Option<&str
 
     let first = &anims[0].1[0];
     let fill = first.filled() as f32 / (first.size * first.size) as f32;
-    if fill < c.min_fill || fill > c.max_fill {
-        return Err(format!("the silhouette covers {:.0}% of the canvas (readable is {:.0}-{:.0}%)", fill * 100.0, c.min_fill * 100.0, c.max_fill * 100.0));
+    let min_fill = if fig.gait == crate::figure::Gait::Hang { c.min_fill_hanging } else { c.min_fill };
+    if fill < min_fill || fill > c.max_fill {
+        return Err(format!("the silhouette covers {:.0}% of the canvas (readable is {:.0}-{:.0}%)", fill * 100.0, min_fill * 100.0, c.max_fill * 100.0));
     }
     passed.push(format!("covers {:.0}% of the canvas", fill * 100.0));
 

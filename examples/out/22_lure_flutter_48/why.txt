@@ -1,0 +1,13 @@
+a tiny silver lure fish, fluttering, 48px
+
+body               body/round (the lure fish)
+material           metal (a lure is made of it)
+colour             "silver lure fish"
+anatomy            a jig: a metal fish threaded on a hook that hangs from its eye, the point up (rules.toml [anatomy.lure])
+realism            realism/realistic (scored best for the profile; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/value_only (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+timing             timing/eased (scored best for the profile; fluttering)
+animation flutter  "fluttering"

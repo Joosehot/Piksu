@@ -155,6 +155,7 @@ perch = "olive"
 roach = "silver"
 pike = "olive"
 hook = "silver"
+lure = "silver"
 
 # ---------------------------------------------------------------- shapes
 # body = [centre x, centre y, width, height] of the main body, per body variant.
@@ -294,6 +295,13 @@ tall = [0.5, 0.5, 0.36, 0.84]
 wide = [0.5, 0.5, 0.5, 0.74]
 eyes_y = 0.0
 
+# a jig hangs from its hook's eye: [centre x, centre y, lure length, height from the eye to the bend]
+[shapes.lure]
+round = [0.5, 0.5, 0.7, 0.9]
+tall = [0.5, 0.5, 0.64, 0.94]
+wide = [0.5, 0.5, 0.78, 0.86]
+eyes_y = 0.0
+
 # ---------------------------------------------------------------- features
 [features]
 horn_h = 0.2
@@ -311,7 +319,8 @@ wing_span = 0.3        # wings added to a subject that has none
 [animations.idle]
 frames = 6
 bob = 0.03
-fish = 0.4         # an idle fish hovers in place: its swim at this share of the amplitude
+fish = 0.4
+breath = 0.012     # a sitting person's upper body rises this much with a breath         # an idle fish hovers in place: its swim at this share of the amplitude
 
 [animations.bounce]
 frames = 8
@@ -372,6 +381,14 @@ lag = 0.1
 flash = 0.2        # the hardest pulls are washed this far towards white
 flash_at = 0.95    # ... the frames where the bend is at least this share of its full swing
 max_change = 0.55  # thrashing reshapes the silhouette more than walking
+
+# a jig fluttering down after a twitch: it rocks around its eye, flashing at the steepest tilt
+[animations.flutter]
+frames = 8
+tilt = 18.0        # degrees it swings each way around the eye
+flash = 0.35       # the steepest frames are washed this far towards white (the metal catches the light)
+flash_at = 0.95
+max_change = 0.75  # a small thing swinging changes its silhouette a lot
 
 [timing]
 snappy_hold = 0.3      # fraction of the cycle held at each extreme
@@ -526,6 +543,28 @@ fin = [0.11, 0.1, 0.57]
 body = [0.5, 0.5, 0.42, 0.8]
 wire = [0.1, 0.075, 0.16]
 
+# a jig: body = [centre x, centre y, lure length, height from the eye to the bend];
+# wire = [thickness, eye radius, barb length] (shares of the height), the least wire width in pixels;
+# lure = [depth, where it sits on the shank (share of the height from the top), bend width,
+# tail fin length] (shares of the lure's length but the second)
+[anatomy.lure]
+body = [0.5, 0.5, 0.7, 0.9]
+wire = [0.04, 0.05, 0.08, 1.3]
+lure = [0.3, 0.45, 0.3, 0.16]
+
+# a person sitting on a small box, seen from the side, facing right (used with "sitting")
+[anatomy.sitter]
+seat = [0.3, 0.27, 0.012]        # centre x, width, the lid's overhang
+hip = [0.38, 0.66]               # the hip joint, on the seat
+torso = [0.29, 0.25, 7.0]        # hip to shoulder, the parka's depth front to back, lean forward (deg)
+hood = [0.125, 0.13]             # the hood's radii
+face = [0.07, 0.084]             # the face's radii in the opening
+ruff = [0.046, 0.28, 0.9]        # the fur ruff's thickness, how far it stands forward (share of the face), the face's size inside it
+leg = [0.24, 0.24, 0.085]        # thigh, shin, width
+arm = [0.15, 0.15, 0.07]         # upper arm, forearm, width
+hold = [38.0, 12.0]              # the near arm: upper arm forward from straight down, forearm up from level (deg)
+trim = [0.04, 0.25, 0.55]        # the hem trim's width, how much of the parka's colour the pale trim takes, how grey the weathered box is
+
 [anatomy.human]
 body = [0.5, 0.315, 0.2, 0.25]    # the torso, shoulders to hips
 head = [0.5, 0.105, 0.085, 0.115] # about 7.5 heads tall
@@ -603,6 +642,9 @@ mark = [0.9, 0.88, 0.52]
 "ice fisherman" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
 "fisherman" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
 "ice angler" = "a realistic man with a red winter hat, a long blue coat, dark brown trousers, black boots and a brown belt"
+"inuit ice fisher" = "a realistic person sitting, with a brown parka with the hood up and a cream fur ruff, dark brown mittens, dark brown trousers and brown kamik"
+"inuk ice fisher" = "a realistic person sitting, with a brown parka with the hood up and a cream fur ruff, dark brown mittens, dark brown trousers and brown kamik"
+"inuit fisher" = "a realistic person sitting, with a brown parka with the hood up and a cream fur ruff, dark brown mittens, dark brown trousers and brown kamik"
 "winston black" = "a realistic man with black hair, a long brown coat, green eyes, a cream shirt with green stripes, a brown belt, dark green trousers, black boots and a black claw arm"
 
 [shading]
@@ -613,6 +655,7 @@ rim_band = 0.72        # rim: radius past this is the rim (shade low-right, ligh
 # ---------------------------------------------------------------- checks
 [checks]
 min_fill = 0.12        # the silhouette covers at least this fraction of the canvas (frame 0)
+min_fill_hanging = 0.015  # ... a hook or a jig: a thin thing centred on its eye, half the canvas left for its swing
 max_fill = 0.85
 min_contrast = 0.18    # luminance difference outline vs main, eyes vs main
 max_change = 0.4       # at most this fraction of silhouette pixels change shape between frames (moves taken out)

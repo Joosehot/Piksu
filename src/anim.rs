@@ -77,6 +77,8 @@ pub fn frame_count(anim: Anim, requested: Option<u32>, cfg: &Config) -> u32 {
 /// Can this figure do this animation? Err explains why not.
 pub fn check_fits(anim: Anim, fig: &Figure, subject_words: &str, item: bool) -> Result<(), String> {
     match anim {
+        Anim::Walk if fig.gait == Gait::Sit => Err(format!("a {subject_words} sitting down doesn't walk; try idle")),
+        Anim::Flutter if fig.gait != Gait::Hang => Err(format!("a {subject_words} doesn't hang from an eye to flutter; try a jig or a hook")),
         Anim::Walk if !fig.has_legs => Err(format!("a {subject_words} has no legs to walk with; try bouncing or floating")),
         Anim::Fly if !fig.has_wings => Err(format!("a {subject_words} has no wings; add \"with wings\" or try floating")),
         Anim::Spin if !item => Err(format!("spinning is for items (coins, gems, stars, hearts, potions), not a {subject_words}")),
@@ -101,7 +103,22 @@ pub fn frames(anim: Anim, n: u32, timing: &str, fig: &Figure, cfg: &Config) -> V
                 Anim::Idle if fig.gait == Gait::Swim => swim(&mut f, fig, p, timing, cfg, a("fish"), Anim::Swim),
                 Anim::Swim => swim(&mut f, fig, p, timing, cfg, 1.0, Anim::Swim),
                 Anim::Struggle => swim(&mut f, fig, p, timing, cfg, 1.0, Anim::Struggle),
+                // sitting: the upper body breathes, the seat and the legs stay put
+                Anim::Idle if fig.gait == Gait::Sit => {
+                    let up = -a("breath") * hump(p, timing, cfg);
+                    for g in [Group::Body, Group::ArmL, Group::ArmR] {
+                        f.groups.insert(g, Xf { dy: up, ..Xf::default() });
+                    }
+                }
                 Anim::Idle => f.whole.dy = a("bob") * w,
+                // a jig after a twitch rocks around its eye as it sinks, flashing at the steepest tilt
+                Anim::Flutter => {
+                    f.whole.pivot = fig.pivots.get(&Group::Body).copied().unwrap_or((cx, cy));
+                    f.whole.rot = a("tilt") * w;
+                    if w.abs() >= a("flash_at") {
+                        f.flash = a("flash");
+                    }
+                }
                 Anim::Float => f.whole.dy = a("drift") * w,
                 Anim::Bounce => {
                     let up = hump(p, timing, cfg);

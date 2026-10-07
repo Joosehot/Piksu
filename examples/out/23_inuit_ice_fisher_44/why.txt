@@ -1,0 +1,16 @@
+an Inuit ice fisher in a fur parka, sitting, idle, 44px
+
+character          "inuit ice fisher" = "a realistic person sitting, with a brown parka with the hood up and a cream fur ruff, dark brown mittens, dark brown trousers and brown kamik" (rules.toml [characters])
+body               body/round (the person)
+material           cloth (a human is made of it)
+colour             default for a human (skin)
+anatomy            realistic human (side view for animals, front for figures, three-quarter for objects)
+realism            realism/realistic ("realistic"; every sprite sits somewhere between cartoon and life)
+body               body/round (scored best for the profile; every sprite has a body)
+palette            palette/hue_shift (scored best for the profile; every sprite has colours)
+shading            shading/lit (scored best for the profile; every sprite is shaded somehow)
+outline            outline/colored (scored best for the profile; every sprite has an edge)
+eyes               eyes/angry (scored best for the profile; a human has a face)
+mouth              mouth/none (scored best for the profile; a human has a face)
+timing             timing/eased (scored best for the profile; idle)
+animation idle     "idle"

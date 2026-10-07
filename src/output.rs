@@ -37,9 +37,19 @@ pub fn sheet(sp: &Sprite, cfg: &Config, scale: u32) -> RgbaImage {
     img
 }
 
-/// A Droid text sprite: palette letters in first-seen order, then rows ('.' = empty).
-pub fn text_sprite(g: &Grid) -> String {
+/// The palette key of colour `i`: letters and digits first, then Latin letters with accents
+/// (a realistic sprite has more than 62 colours, and every colour needs a key of its own).
+fn symbol(i: usize) -> char {
     const LETTERS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    if let Some(c) = LETTERS.chars().nth(i) {
+        return c;
+    }
+    // U+00C0 onwards, past the multiplication and division signs
+    (0xC0u32..).filter(|c| *c != 0xD7 && *c != 0xF7).filter_map(char::from_u32).nth(i - LETTERS.len()).expect("a key for every colour")
+}
+
+/// A Droid text sprite: palette keys in first-seen order, then rows ('.' = empty).
+pub fn text_sprite(g: &Grid) -> String {
     let mut pal: Vec<[u8; 3]> = Vec::new();
     let mut rows = Vec::new();
     for y in 0..g.size {
@@ -53,7 +63,7 @@ pub fn text_sprite(g: &Grid) -> String {
                         pal.push(u);
                         pal.len() - 1
                     });
-                    row.push(LETTERS.chars().nth(i).unwrap_or('#'));
+                    row.push(symbol(i));
                 }
             }
         }
@@ -61,7 +71,7 @@ pub fn text_sprite(g: &Grid) -> String {
     }
     let mut out = String::new();
     for (i, p) in pal.iter().enumerate() {
-        out.push_str(&format!("{} = #{:02x}{:02x}{:02x}\n", LETTERS.chars().nth(i).unwrap_or('#'), p[0], p[1], p[2]));
+        out.push_str(&format!("{} = #{:02x}{:02x}{:02x}\n", symbol(i), p[0], p[1], p[2]));
     }
     out.push_str("---\n");
     for r in rows {

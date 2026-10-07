@@ -154,6 +154,8 @@ pub const REQUIRED: &[(&str, &[&str])] = &[
     ("roach", &["body", "profile", "head", "tail", "dorsal", "anal", "fin"]),
     ("pike", &["body", "profile", "head", "tail", "dorsal", "anal", "fin"]),
     ("hook", &["body", "wire"]),
+    ("lure", &["body", "wire", "lure"]),
+    ("sitter", &["seat", "hip", "torso", "hood", "face", "ruff", "leg", "arm", "hold", "trim"]),
 ];
 
 /// A realistic eye: almond white, coloured iris, pupil (slit, round or wide), one catch-light.
@@ -181,6 +183,220 @@ fn eye(b: &mut B, x: f32, y: f32, r: f32, iris: Rgb, pupil: &str, lid: Rgb, angr
     b.detail("eye_closed", Group::Body, 5, Shape::Rect { x0: x - r * 1.2, y0: y - r * 0.1, x1: x + r * 1.2, y1: y + r * 0.2 }, adjust(lid, 0.45, 1.0, 0.0)).show = Show::EyesClosed;
 }
 
+/// Clothes the side-view sitting blueprint draws (the front view has no parka yet).
+const SIDE_ONLY: &[Feature] = &[Feature::Parka, Feature::Hood, Feature::Fur, Feature::Mittens, Feature::Kamik];
+
+fn lerp(a: (f32, f32), b: (f32, f32), t: f32) -> (f32, f32) {
+    (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)
+}
+
+/// A person sitting on a small wooden box, seen from the side and facing right, the way an ice
+/// fisher sits at the hole: the thighs level on the seat, the shins straight down, the near
+/// hand held forward over the knees (where a rod goes), the far hand on the far knee. Dressed
+/// from the sentence: a parka (a pullover of skins that drapes over the seat, with a trimmed hem
+/// and cuffs) with its hood up and a fur ruff framing the face, mittens, kamik (soft skin boots
+/// with a pale top band), trousers. What isn't named gets a coat, bare hands and plain boots.
+/// Proportions are in [anatomy.sitter]; returns (body box, head box).
+fn sitter(b: &mut B, pivots: &mut BTreeMap<Group, (f32, f32)>, req: &Request, cfg: &Config, skin: Rgb) -> ([f32; 4], [f32; 4]) {
+    let d = |k: &str| cfg.anatomy["sitter"][k].as_slice();
+    let (seat, hipd, torso, hood, face, ruff, leg, arm, hold, trim) =
+        (d("seat"), d("hip"), d("torso"), d("hood"), d("face"), d("ruff"), d("leg"), d("arm"), d("hold"), d("trim"));
+    let wear = |f: Feature, default: &str| -> Option<Rgb> {
+        req.has(f).map(|x| {
+            let c = x.color.as_ref().map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(cfg.colors[default]);
+            let deep = x.color.as_ref().is_some_and(|c| c.v.1 == Some(Tone::Dark));
+            adjust(c, cfg.realism.cloth_value * if deep { cfg.tones.dark } else { 1.0 }, cfg.realism.cloth_saturation, 0.0)
+        })
+    };
+    // a parka, mittens and kamik are skins, not dyed cloth: they keep more of their colour
+    let hide = |f: Feature, default: &str| -> Option<Rgb> {
+        req.has(f).map(|x| {
+            let c = x.color.as_ref().map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(cfg.colors[default]);
+            adjust(c, cfg.realism.cloth_value.sqrt(), cfg.realism.cloth_saturation.sqrt(), 0.0)
+        })
+    };
+    let dark = |c: Rgb, v: f32| adjust(c, v, 1.0, 0.0);
+    let parka = hide(Feature::Parka, "brown")
+        .or_else(|| wear(Feature::Coat, "brown"))
+        .unwrap_or_else(|| adjust(cfg.colors["blue"], cfg.realism.cloth_value, cfg.realism.cloth_saturation, 0.0));
+    let trousers = wear(Feature::Trousers, "brown").unwrap_or_else(|| dark(cfg.colors["brown"], 0.5));
+    let mitts = hide(Feature::Mittens, "brown");
+    let boots = hide(Feature::Kamik, "brown").or_else(|| wear(Feature::Boots, "black")).unwrap_or(cfg.colors["black"]);
+    // pale skin trims (bleached hide) and the fur keep their own colour
+    let pale = mix(cfg.colors["cream"], parka, trim[1]);
+    let fur = req.has(Feature::Fur).map(|x| x.color.as_ref().map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(cfg.colors["cream"]));
+    // weathered wood, greyed by the weather
+    let wood = mix(cfg.colors["brown"], cfg.colors["grey"], trim[2]);
+
+    // ---- the frame: the hip on the seat, the torso leaning forward, the head in the hood
+    let (hx, hy) = (hipd[0], hipd[1]);
+    let (tl, depth, lean) = (torso[0], torso[1], torso[2].to_radians());
+    let up = (lean.sin(), -lean.cos());
+    let fwd = (lean.cos(), lean.sin());
+    // from `o`, `a` along the spine (up) and `f` forward across it
+    let at = |o: (f32, f32), a: f32, f: f32| (o.0 + up.0 * a + fwd.0 * f, o.1 + up.1 * a + fwd.1 * f);
+    let hip = (hx, hy);
+    let sh = at(hip, tl, 0.0);
+    let (thigh, shin, lw) = (leg[0], leg[1], leg[2]);
+    let knee = (hx + thigh, hy - lw * 0.1);
+    let ankle = (knee.0 + lw * 0.15, knee.1 + shin);
+    let sole = ankle.1 + lw * 0.5;
+    let body_c = [(hx + sh.0) / 2.0, (hy + sh.1) / 2.0, depth, tl];
+
+    // ---- the seat: a small wooden box with a lid
+    let (sx, sw) = (seat[0], seat[1]);
+    let stop = hy + lw * 0.45;
+    let sbox = (sx - sw / 2.0, stop, sx + sw / 2.0, sole);
+    b.solid("seat", Group::LegL, 0, Shape::Rect { x0: sbox.0, y0: sbox.1, x1: sbox.2, y1: sbox.3 }, wood, Some(sbox));
+    b.solid("seat_lid", Group::LegL, 1, Shape::Rect { x0: sbox.0 - seat[2], y0: stop - seat[2] * 0.5, x1: sbox.2 + seat[2], y1: stop + (sole - stop) * 0.16 }, adjust(wood, 1.12, 1.0, 0.0), None);
+    for k in 1..3 {
+        let y = stop + (sole - stop) * (0.16 + 0.28 * k as f32);
+        b.add("plank", Group::LegL, 2, Shape::Rect { x0: sbox.0, y0: y, x1: sbox.2, y1: y + 0.008 }, dark(wood, 0.6)).clip = Some("seat");
+    }
+    b.add("seat_side", Group::LegL, 2, Shape::Rect { x0: sbox.2 - sw * 0.16, y0: stop, x1: sbox.2, y1: sole }, dark(wood, 0.78)).clip = Some("seat");
+
+    // ---- legs: the far one a little behind and in shadow, then the near one
+    for (g, k, off) in [(Group::LegR, 0.68, -lw * 0.4), (Group::LegL, 1.0, 0.0)] {
+        let move_ = |p: (f32, f32)| (p.0 + off, p.1 + off * 0.25);
+        let (h, kn, an) = (move_(hip), move_(knee), move_(ankle));
+        let so = sole + off * 0.25;
+        let layer = if k < 1.0 { 3 } else { 5 };
+        let tc = dark(trousers, k);
+        let lbox = Some((h.0, h.1 - lw, an.0 + lw, so));
+        b.solid("trouser", g, layer, limb(h.0, h.1, kn.0, kn.1, lw * 1.15, lw), tc, lbox);
+        b.solid("trouser", g, layer, limb(kn.0, kn.1, an.0, an.1, lw, lw * 0.9), tc, lbox);
+        b.add("knee_fold", g, layer + 1, band(&curve((kn.0 - lw * 0.6, kn.1 - lw * 0.3), (kn.0 - lw * 0.1, kn.1 + lw * 0.1), (kn.0 - lw * 0.3, kn.1 + lw * 0.7), 4), 0.007, 0.007), dark(tc, 0.7)).clip = Some("trouser");
+        // kamik (or boots): a soft shaft to below the knee, a soft rounded foot without a heel
+        let bc = dark(boots, k);
+        let top = kn.1 + shin * 0.22;
+        let bbox = Some((an.0 - lw, top, an.0 + lw * 1.8, so));
+        b.solid("boot", g, layer + 2, Shape::Poly(vec![
+            (an.0 - lw * 0.62, top), (an.0 + lw * 0.6, top), (an.0 + lw * 0.58, an.1 - lw * 0.1),
+            (an.0 + lw * 1.35, an.1 + lw * 0.02), (an.0 + lw * 1.7, an.1 + lw * 0.25), (an.0 + lw * 1.6, so),
+            (an.0 - lw * 0.62, so),
+        ]), bc, bbox);
+        b.add("sole", g, layer + 3, Shape::Rect { x0: an.0 - lw, y0: so - lw * 0.16, x1: an.0 + lw * 2.0, y1: so + 0.004 }, dark(bc, 0.55)).clip = Some("boot");
+        if req.has(Feature::Kamik).is_some() {
+            // the pale band at the top and a dark strip sewn round the shaft
+            b.add("kamik_band", g, layer + 3, Shape::Rect { x0: an.0 - lw, y0: top - 0.004, x1: an.0 + lw, y1: top + shin * 0.13 }, dark(pale, k)).clip = Some("boot");
+            b.add("kamik_strip", g, layer + 3, Shape::Rect { x0: an.0 - lw, y0: top + shin * 0.2, x1: an.0 + lw, y1: top + shin * 0.25 }, dark(bc, 0.6)).clip = Some("boot");
+        }
+        pivots.insert(g, h);
+    }
+
+    // ---- the far arm, behind the body: its hand rests on the far knee
+    let (ua, fa, aw) = (arm[0], arm[1], arm[2]);
+    let sleeve_dark = dark(parka, 0.68);
+    let fsh = at(sh, -aw * 0.6, -depth * 0.05);
+    let fwr = (knee.0 - lw * 1.1, knee.1 - lw * 0.75);
+    let felb = (fsh.0 + ua * 0.25, fsh.1 + ua * 0.95);
+    b.solid("sleeve", Group::ArmL, 4, limb(fsh.0, fsh.1, felb.0, felb.1, aw * 1.1, aw), sleeve_dark, None);
+    b.solid("sleeve", Group::ArmL, 4, limb(felb.0, felb.1, fwr.0, fwr.1, aw, aw * 0.9), sleeve_dark, None);
+    let far_hand = (fwr.0 + aw * 0.55, fwr.1 + aw * 0.1);
+    b.solid("hand", Group::ArmL, 4, oval(far_hand.0, far_hand.1, aw * 0.62, aw * 0.5, 0.0), dark(mitts.unwrap_or(skin), 0.72), None);
+    pivots.insert(Group::ArmL, fsh);
+
+    // ---- the parka: a pullover that drapes over the seat and the top of the thighs
+    let mid = at(hip, tl * 0.5, 0.0);
+    let hem_back = (hx - depth * 0.62, hy + lw * 1.15);
+    let hem_mid = (hx + thigh * 0.1, hy + lw * 0.7);
+    let hem_front = (hx + thigh * 0.42, hy + lw * 0.5);
+    let outline = vec![
+        at(sh, 0.0, -depth * 0.42), at(sh, aw * 0.5, -depth * 0.12), at(sh, aw * 0.3, depth * 0.2), at(sh, -aw * 0.2, depth * 0.38),
+        at(mid, 0.0, depth * 0.5), at(hip, tl * 0.18, depth * 0.52),
+        (hx + thigh * 0.35, hy - lw * 0.62), hem_front, hem_mid, hem_back,
+        at(hip, 0.0, -depth * 0.6), at(mid, 0.0, -depth * 0.54),
+    ];
+    let pbox = Some((hx - depth * 0.62, sh.1 - aw, hx + thigh * 0.42, hem_back.1));
+    b.solid("parka", Group::Body, 7, Shape::Poly(outline), parka, pbox);
+    // the hem trim: a pale band with a dark pattern along the bottom edge
+    let hem = [hem_back, hem_mid, hem_front];
+    let tw = trim[0];
+    let inner: Vec<(f32, f32)> = hem.iter().map(|p| (p.0, p.1 - tw * 0.5)).collect();
+    b.add("trim", Group::Body, 8, band(&inner, tw, tw), pale).clip = Some("parka");
+    for k in 0..6 {
+        let t = (k as f32 + 0.5) / 6.0;
+        let p = if t < 0.5 { lerp(hem[0], hem[1], t * 2.0) } else { lerp(hem[1], hem[2], t * 2.0 - 1.0) };
+        b.add("trim_mark", Group::Body, 9, Shape::Rect { x0: p.0 - tw * 0.25, y0: p.1 - tw * 0.75, x1: p.0 + tw * 0.25, y1: p.1 - tw * 0.3 }, dark(parka, 0.55)).clip = Some("trim");
+    }
+    // a seam down the side and a fold at the waist
+    b.add("seam", Group::Body, 8, band(&[at(sh, -aw * 0.4, -depth * 0.05), at(mid, 0.0, -depth * 0.08), at(hip, -tl * 0.05, -depth * 0.12)], 0.007, 0.007), dark(parka, 0.72)).clip = Some("parka");
+    b.add("fold", Group::Body, 8, band(&curve(at(hip, tl * 0.15, depth * 0.45), at(hip, tl * 0.05, depth * 0.1), at(hip, tl * 0.12, -depth * 0.3), 5), 0.008, 0.006), dark(parka, 0.66)).clip = Some("parka");
+
+    // ---- the head: in the hood with a fur ruff round the face, or bare with hair
+    let (hrx, hry) = (hood[0], hood[1]);
+    let hood_c = at(sh, hry * 0.85, -hrx * 0.12);
+    let (frx, fry) = (face[0], face[1]);
+    let face_c = (hood_c.0 + hrx * 0.42, hood_c.1 + hry * 0.06);
+    let head_c = [hood_c.0, hood_c.1, hrx * 2.0, hry * 2.0];
+    let hooded = req.has(Feature::Hood).is_some();
+    if hooded {
+        b.solid("hood", Group::Body, 10, oval(hood_c.0, hood_c.1, hrx, hry, -8.0), parka, Some((hood_c.0 - hrx, hood_c.1 - hry, hood_c.0 + hrx, hood_c.1 + hry)));
+        b.add("hood_seam", Group::Body, 11, band(&curve((hood_c.0 - hrx * 0.1, hood_c.1 - hry * 0.98), (hood_c.0 - hrx * 0.75, hood_c.1 - hry * 0.3), (hood_c.0 - hrx * 0.5, hood_c.1 + hry * 0.7), 6), 0.007, 0.007), dark(parka, 0.7)).clip = Some("hood");
+        // the opening's shadow round the face
+        b.add("hood_inside", Group::Body, 11, oval(face_c.0, face_c.1, frx * 1.2, fry * 1.15, 0.0), dark(parka, 0.35));
+    }
+    let ruff_on = hooded && fur.is_some();
+    // inside a ruff the face sits a little back in the opening
+    let fs = if ruff_on { ruff[2] } else { 1.0 };
+    let (frx, fry) = (frx * fs, fry * fs);
+    b.solid("head", Group::Body, 17, oval(face_c.0, face_c.1, frx, fry, 0.0), skin, Some((face_c.0 - frx, face_c.1 - fry, face_c.0 + frx, face_c.1 + fry)));
+    // a face in profile, looking down at the hole: brow and eye, nose, mouth, a cheek red from the cold
+    let (ex, ey) = (face_c.0 + frx * 0.32, face_c.1 - fry * 0.1);
+    b.detail("eye", Group::Body, 19, Shape::Rect { x0: ex - frx * 0.14, y0: ey - fry * 0.1, x1: ex + frx * 0.18, y1: ey + fry * 0.12 }, cfg.palette_rules.eye_dark).show = Show::EyesOpen;
+    b.detail("eye_closed", Group::Body, 19, Shape::Rect { x0: ex - frx * 0.16, y0: ey, x1: ex + frx * 0.2, y1: ey + fry * 0.08 }, dark(skin, 0.5)).show = Show::EyesClosed;
+    b.add("brow", Group::Body, 19, band(&[(ex - frx * 0.25, ey - fry * 0.28), (ex + frx * 0.3, ey - fry * 0.25)], 0.008, 0.007), dark(skin, 0.45)).clip = Some("head");
+    b.solid("nose", Group::Body, 18, Shape::Poly(vec![(face_c.0 + frx * 0.8, ey + fry * 0.02), (face_c.0 + frx * 1.18, face_c.1 + fry * 0.32), (face_c.0 + frx * 0.82, face_c.1 + fry * 0.4)]), skin, None);
+    b.add("mouth", Group::Body, 19, band(&[(face_c.0 + frx * 0.38, face_c.1 + fry * 0.58), (face_c.0 + frx * 0.8, face_c.1 + fry * 0.55)], 0.007, 0.007), mix(dark(skin, 0.55), cfg.colors["red"], 0.2)).clip = Some("head");
+    b.add("cheek", Group::Body, 18, oval(face_c.0 + frx * 0.05, face_c.1 + fry * 0.3, frx * 0.32, fry * 0.22, 0.0), mix(skin, cfg.colors["red"], 0.22)).clip = Some("head");
+    b.add("jaw_shadow", Group::Body, 18, oval(face_c.0 - frx * 0.62, face_c.1 + fry * 0.1, frx * 0.4, fry * 0.85, 0.0), dark(skin, 0.8)).clip = Some("head");
+    if let (true, Some(fc)) = (ruff_on, fur) {
+        // the ruff: long fur round the opening, darker at the tips, lighter underfur inside;
+        // it stands out past the face, so the face looks out of it as from a frame
+        let t = ruff[0];
+        let rc = (face_c.0 + frx * ruff[1], face_c.1);
+        let tips = mix(fc, cfg.colors["brown"], 0.5);
+        let bumps: Vec<(f32, f32)> = (0..14).map(|k| (k as f32 * 360.0 / 14.0 + 9.0, if k % 2 == 0 { 0.1 } else { -0.04 })).collect();
+        let (orx, ory) = (frx + t, fry + t);
+        b.solid("ruff", Group::Body, 15, blob(rc.0, rc.1, orx, ory, &bumps), tips, Some((rc.0 - orx, rc.1 - ory, rc.0 + orx, rc.1 + ory)));
+        b.solid("ruff_light", Group::Body, 16, blob(rc.0, rc.1, frx + t * 0.6, fry + t * 0.6, &bumps), fc, Some((rc.0 - orx, rc.1 - ory, rc.0 + orx, rc.1 + ory)));
+        b.add("hood_shadow", Group::Body, 18, Shape::Rect { x0: face_c.0 - frx, y0: face_c.1 - fry, x1: face_c.0 + frx, y1: face_c.1 - fry * 0.6 }, dark(skin, 0.68)).clip = Some("head");
+        // a few dark fur tips flicking outwards
+        for k in 0..10 {
+            let a = (k as f32 * 36.0 + 18.0).to_radians();
+            let (c, s) = (a.cos(), a.sin());
+            let p0 = (rc.0 + c * (frx + t * 0.6), rc.1 + s * (fry + t * 0.6));
+            let p1 = (rc.0 + c * (frx + t * 1.2), rc.1 + s * (fry + t * 1.2));
+            b.add("fur_tip", Group::Body, 16, band(&[p0, p1], 0.009, 0.005), dark(tips, 0.72));
+        }
+    } else if !hooded {
+        let hair = req.has(Feature::Hair).and_then(|x| x.color.as_ref()).map(|c| crate::figure::color_of(cfg, c.v.0, c.v.1)).unwrap_or(cfg.colors["black"]);
+        b.solid("hair", Group::Body, 18, Shape::Egg { cx: face_c.0 - frx * 0.3, cy: face_c.1 - fry * 0.3, rx: frx * 1.05, ry_top: fry * 0.85, ry_bottom: fry * 0.5 }, hair, None);
+    }
+
+    // ---- the near arm: held forward over the knees, the hand closed (round a rod's grip)
+    let nsh = at(sh, -aw * 0.7, depth * 0.08);
+    let (a1, a2) = (hold[0].to_radians(), hold[1].to_radians());
+    let nelb = (nsh.0 + ua * a1.sin(), nsh.1 + ua * a1.cos());
+    let nwr = (nelb.0 + fa * a2.cos(), nelb.1 - fa * a2.sin());
+    let abox = Some((nsh.0 - aw, nsh.1 - aw, nwr.0 + aw, nelb.1 + aw));
+    b.solid("sleeve", Group::ArmR, 20, limb(nsh.0, nsh.1, nelb.0, nelb.1, aw * 1.2, aw * 1.05), parka, abox);
+    b.solid("sleeve", Group::ArmR, 20, limb(nelb.0, nelb.1, nwr.0, nwr.1, aw * 1.05, aw * 0.95), parka, abox);
+    b.add("elbow_fold", Group::ArmR, 21, band(&curve((nelb.0 - aw * 0.5, nelb.1 - aw * 0.4), (nelb.0 + aw * 0.1, nelb.1 - aw * 0.1), (nelb.0 + aw * 0.2, nelb.1 + aw * 0.5), 4), 0.007, 0.007), dark(parka, 0.66)).clip = Some("sleeve");
+    let cuff = fur.unwrap_or(pale);
+    b.solid("cuff", Group::ArmR, 22, oval(nwr.0 - aw * 0.1, nwr.1, aw * 0.42, aw * 0.68, -hold[1]), cuff, None);
+    let hc = (nwr.0 + aw * 0.6, nwr.1 - aw * 0.05);
+    let hand = mitts.unwrap_or(skin);
+    b.solid("hand", Group::ArmR, 23, oval(hc.0, hc.1, aw * 0.68, aw * 0.56, -hold[1]), hand, Some((hc.0 - aw, hc.1 - aw, hc.0 + aw, hc.1 + aw)));
+    if mitts.is_some() {
+        b.solid("thumb", Group::ArmR, 23, oval(hc.0 + aw * 0.1, hc.1 - aw * 0.5, aw * 0.25, aw * 0.3, 20.0), hand, None);
+        b.add("mitten_seam", Group::ArmR, 24, band(&curve((hc.0 - aw * 0.3, hc.1 - aw * 0.3), (hc.0 + aw * 0.1, hc.1 + aw * 0.05), (hc.0 + aw * 0.55, hc.1 + aw * 0.15), 4), 0.007, 0.007), dark(hand, 0.6)).clip = Some("hand");
+    }
+    pivots.insert(Group::ArmR, nsh);
+    pivots.insert(Group::Body, hip);
+    (body_c, head_c)
+}
+
 pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why: Vec<(String, String)>) -> Result<Figure, String> {
     let subj = req.subject.v;
     let main = pal.main;
@@ -200,7 +416,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
     let head_c: [f32; 4];
 
     match subj {
-        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook => unreachable!("drawn by fish.rs"),
+        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook | Subject::Lure => unreachable!("drawn by fish.rs"),
         Subject::Cat => {
             // side view, facing right
             let bd = d("body");
@@ -712,7 +928,15 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
             b.add("reflection", Group::Body, 4, band(&curve((bx - bw * 0.36, by + bh * 0.1), (bx - bw * 0.38, by - bh * 0.25), (bx - bw * 0.12, by - bh * 0.4), 6), 0.035, 0.02), [1.0; 3]).clip = Some("glass");
             symmetric = false;
         }
+        Subject::Human if req.has(Feature::Sitting).is_some() => {
+            (body_c, head_c) = sitter(&mut b, &mut pivots, req, cfg, main);
+            has_eyes = true;
+            gait = Gait::Sit;
+        }
         Subject::Human => {
+            if let Some(f) = req.features.iter().find(|f| SIDE_ONLY.contains(&f.feature.v)) {
+                return Err(format!("\"{}\" is drawn on a sitting person (seen from the side); add \"sitting\"", f.feature.words));
+            }
             // A standing person seen from the front, about 7.5 heads tall, drawn for 128 pixels:
             // at that size a face, the fold of a coat and the scales on a claw are several pixels
             // each. The character's right side is on the viewer's left (s = -1). Clothes come
@@ -1087,7 +1311,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
         body: body_c,
         feet_y,
         symmetric,
-        has_legs: !matches!(gait, Gait::None | Gait::Swim),
+        has_legs: !matches!(gait, Gait::None | Gait::Swim | Gait::Hang | Gait::Sit),
         has_wings,
         has_eyes,
         material: material_of(subj),

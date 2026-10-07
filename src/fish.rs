@@ -163,7 +163,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
     // features a side-view fish (or a hook) can't carry are an honest error, not a guess
     for f in &req.features {
         let ok = matches!(f.feature.v, Feature::Stripes | Feature::Spots | Feature::Tail) || crate::rules::FACE_FEATURES.contains(&f.feature.v);
-        if !ok || (subj == Subject::Hook && matches!(f.feature.v, Feature::Stripes | Feature::Spots | Feature::Tail)) {
+        if !ok || (matches!(subj, Subject::Hook | Subject::Lure) && matches!(f.feature.v, Feature::Stripes | Feature::Spots | Feature::Tail)) {
             return Err(format!("\"{}\" doesn't fit a {} (seen from the side); a fish takes stripes, spots and eye colours", f.feature.words, subj.name()));
         }
     }
@@ -173,6 +173,9 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen, pal: Palette, mut why
     let px = 1.0 / size;
     if subj == Subject::Hook {
         return hook(cfg, realism, pal, boxed, why);
+    }
+    if subj == Subject::Lure {
+        return lure(cfg, realism, pal, boxed, px, why);
     }
     let d = |k: &str| dims(cfg, subj, k).expect("validated");
     let look = &cfg.fish.kinds[subj.name()];
@@ -568,7 +571,104 @@ fn hook(cfg: &Config, realism: &'static str, pal: Palette, boxed: [f32; 4], mut 
         has_eyes: false,
         material: material_of(Subject::Hook),
         realism,
-        gait: Gait::None,
+        gait: Gait::Hang,
+        why,
+    })
+}
+
+/// A jig (pilkki): a small metal fish on a hook that hangs from its eye. The hook's shank runs
+/// down from the eye behind the lure's body, so the lure sits threaded on it; the bend and the
+/// point (turned up, as a hanging hook's is) come out below. The lure is a slim lens of polished
+/// metal facing right: a darker back, a bright belly, a forked tail, an eye and a red gill
+/// mark, the way jigs are painted. `boxed` = [centre x, centre y, lure length, height from the
+/// eye to the bend]; the rest is in [anatomy.lure].
+fn lure(cfg: &Config, realism: &'static str, pal: Palette, boxed: [f32; 4], px: f32, mut why: Vec<(String, String)>) -> Result<Figure, String> {
+    let a = &cfg.anatomy["lure"];
+    let (w, l) = (&a["wire"], &a["lure"]);
+    let [cx, cy, len, h] = boxed;
+    // the fit scales a thing hung from its eye by about half the canvas over its height, so the
+    // wire stays at least `wire[3]` pixels wide in the end
+    let min_wire = w[3] * px * h / 0.5;
+    let (thick, er, barb) = ((w[0] * h).max(min_wire), (w[1] * h).max(min_wire * 1.2), w[2] * h);
+    let (depth, at, bend_w, tail) = (l[0] * len, l[1], l[2] * len, l[3] * len);
+    let main = pal.main;
+    let top = cy - h / 2.0;
+    let shank_x = cx;
+    let eye_c = (shank_x, top + er + thick * 0.5);
+    let r = bend_w / 2.0;
+    let bend_y = cy + h / 2.0 - r - thick / 2.0;
+    let point_x = shank_x - 2.0 * r;
+    let tip_y = bend_y - r * 1.4;
+    let ly = top + h * at;
+    let (head_x, tail_x) = (shank_x + len * 0.55, shank_x - len * 0.45);
+    let sbox = Some((tail_x - tail, ly - depth / 2.0, head_x, ly + depth / 2.0));
+    let wire_box = Some((point_x - r, top, shank_x + r, cy + h / 2.0));
+    let mut b = B { parts: vec![] };
+    let metal = |b: &mut B, role: &'static str, layer: i32, shape: Shape, c: Rgb, sb: Option<(f32, f32, f32, f32)>| {
+        let p = b.add(role, Group::Body, layer, shape, c);
+        p.shaded = true;
+        p.shade_box = sb;
+    };
+    // ---- the hook: eye, shank (behind the lure), bend, point and barb
+    let wire_c = adjust(main, 0.82, 0.8, 0.0);
+    let mut path: Vec<(f32, f32)> = (0..=8).map(|k| (shank_x, eye_c.1 + er + (bend_y - eye_c.1 - er) * k as f32 / 8.0)).collect();
+    path.extend((1..=16).map(|k| {
+        let t = PI * k as f32 / 16.0;
+        (shank_x - r + r * t.cos(), bend_y + r * t.sin())
+    }));
+    path.extend((1..=4).map(|k| (point_x, bend_y - (bend_y - tip_y) * k as f32 / 4.0)));
+    metal(&mut b, "wire", -1, band(&path, thick, thick * 0.8), wire_c, wire_box);
+    metal(&mut b, "wire", -1, Shape::Poly(vec![(point_x - thick * 0.5, tip_y + thick * 0.3), (point_x + thick * 0.5, tip_y + thick * 0.3), (point_x, tip_y - thick * 1.5)]), wire_c, wire_box);
+    let base = point_x + thick * 0.4;
+    metal(&mut b, "barb", -1, Shape::Poly(vec![(base - thick * 0.2, tip_y - thick * 0.1), (base + barb * 0.5, tip_y + barb * 1.1), (base - thick * 0.2, tip_y + barb * 0.6)]), wire_c, wire_box);
+    let ring: Vec<(f32, f32)> = (0..=24).map(|k| {
+        let t = 2.0 * PI * k as f32 / 24.0;
+        (eye_c.0 + er * t.cos(), eye_c.1 + er * t.sin())
+    }).collect();
+    metal(&mut b, "eye_ring", 0, band(&ring, thick * 0.8, thick * 0.8), wire_c, wire_box);
+    // ---- the lure: a lens pointed at the head and the tail root, deepest a little before the middle
+    let n = 20;
+    let lens = |side: f32| -> Vec<(f32, f32)> {
+        (0..=n).map(|k| {
+            let t = k as f32 / n as f32;
+            let x = head_x - (head_x - tail_x) * t;
+            let f = (PI * t.powf(0.85)).sin().max(0.0);
+            (x, ly + side * depth / 2.0 * f.max(0.12))
+        }).collect()
+    };
+    let mut outline = lens(-1.0);
+    outline.extend(lens(1.0).into_iter().rev());
+    metal(&mut b, "body", 1, Shape::Poly(outline.clone()), main, sbox);
+    // the forked tail
+    metal(&mut b, "tail_fin", 0, Shape::Poly(vec![
+        (tail_x + px * 0.5, ly), (tail_x - tail, ly - depth * 0.5), (tail_x - tail * 0.55, ly), (tail_x - tail, ly + depth * 0.5),
+    ]), main, sbox);
+    // a darker back, a bright belly; a stripe of light down the flank (polished metal)
+    let back: Vec<(f32, f32)> = lens(-1.0).into_iter().chain(lens(-0.15).into_iter().rev()).collect();
+    b.add("back", Group::Body, 2, Shape::Poly(back), adjust(main, 0.62, 1.2, -0.02)).clip = Some("body");
+    b.add("flank_light", Group::Body, 3, band(&[(head_x - len * 0.18, ly + depth * 0.05), (tail_x + len * 0.12, ly + depth * 0.05)], (depth * 0.16).max(px), (depth * 0.1).max(px * 0.6)), pal.spec).clip = Some("body");
+    // the painted face: a red gill mark and an eye
+    b.add("gill", Group::Body, 4, band(&[(head_x - len * 0.2, ly - depth * 0.3), (head_x - len * 0.24, ly + depth * 0.3)], (len * 0.05).max(px), (len * 0.04).max(px)), cfg.colors["red"]).clip = Some("body");
+    let er2 = (depth * 0.17).max(px * 0.7);
+    b.add("eye", Group::Body, 5, Shape::Ellipse { cx: head_x - len * 0.11, cy: ly - depth * 0.06, rx: er2, ry: er2 }, cfg.palette_rules.eye_dark).min_pixel = true;
+    if realism != "realistic" {
+        b.add("glint", Group::Body, 6, Shape::Rect { x0: head_x - len * 0.42, y0: ly - depth * 0.3, x1: head_x - len * 0.32, y1: ly - depth * 0.18 }, [1.0; 3]).clip = Some("body");
+    }
+    why.push(("anatomy".into(), "a jig: a metal fish threaded on a hook that hangs from its eye, the point up (rules.toml [anatomy.lure])".into()));
+    let feet_y = b.parts.iter().map(|p| p.shape.bbox().3).fold(0.0f32, f32::max);
+    Ok(Figure {
+        parts: b.parts,
+        pal,
+        pivots: BTreeMap::from([(Group::Body, eye_c)]),
+        body: [cx, ly, len, depth],
+        feet_y,
+        symmetric: false,
+        has_legs: false,
+        has_wings: false,
+        has_eyes: false,
+        material: material_of(Subject::Lure),
+        realism,
+        gait: Gait::Hang,
         why,
     })
 }
@@ -666,7 +766,7 @@ mod tests {
             let f = fig("a hook", r);
             assert_eq!(f.material, crate::figure::Material::Metal);
             assert!(f.parts.iter().filter(|p| p.role == "body").count() >= 3, "wire, eye, barb");
-            assert_eq!(f.gait, Gait::None);
+            assert_eq!(f.gait, Gait::Hang);
         }
     }
 }

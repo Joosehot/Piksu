@@ -59,7 +59,7 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   `[characters]`: `piksu "Winston Black, walking"`.
 
 - **Subjects:** slime, ghost, bat, cat, dog, frog, knight, robot, coin, gem, star, heart, potion,
-  mushroom, human, fish, perch, roach, pike and hook. A dog and a human are always drawn with real
+  mushroom, human, fish, perch, roach, pike, hook and lure. A dog and a human are always drawn with real
   anatomy.
 - **Fish** (for an ice-fishing game): Finnish lake fish seen from the side, facing right. A perch
   (ahven) is green-yellow with dark bars, red-orange fins and a spiny first dorsal fin with a black
@@ -71,14 +71,24 @@ lives in `rules.toml`. Point `--rules` at a copy to change the taste.
   its gaping mouth, bends hard one way then the other, the tail whips twice per bend and the two
   hardest pulls flash; idle is a gentle swim in place; hurt flashes and shakes. "a silver hook" is a fishing hook, and "an ice
   fisherman" is a person in a bobble hat, a long winter coat and boots (`[characters]`).
+  "a tiny silver lure fish" (a jig, pilkki) is a small polished metal fish threaded on a hook;
+  a hook and a jig hang from the hook's eye, point up, and are drawn with the eye at the centre
+  of the canvas, so a game hangs them by their middle. `fluttering` (jigging) rocks a jig around
+  its eye as it sinks after a twitch, flashing at the steepest tilt.
+- **Sitting:** "sitting" draws a person from the side, facing right, on a small weathered box,
+  the near hand held forward (where a rod goes): the upper body breathes when idle, the seat and
+  feet stay put. Cold-weather clothes go with it: a parka of skins with a trimmed hem, its hood
+  up and a fur ruff framing the face, mittens and kamik (soft skin boots with a pale top band).
+  "an Inuit ice fisher" (or "an Inuk ice fisher") is such a person (`[characters]`), proportions
+  in `[anatomy.sitter]`.
   ![fish at 128](examples/fish/showcase.png) ![fish at 32, enlarged 4x](examples/fish/showcase_32.png)
 - **Colours:** red, orange, yellow, green, blue, purple, pink, black, white, grey, brown, gold,
   silver and teal, each optionally light or dark. A colour before a feature colours that feature
   ("red eyes", "a gold crown").
 - **Features:** big / small / one eye, angry, sleepy, happy, fangs, horns, ears, wings, crown,
   hat, antenna, tail, spots and stripes; a person also takes a winter hat (beanie).
-- **Animations:** idle, bouncing, walking, flying, spinning, floating, blinking, hurt, swimming and
-  struggling.
+- **Animations:** idle, bouncing, walking, flying, spinning, floating, blinking, hurt, swimming,
+  struggling and fluttering.
   "6 frames" sets the count. A slime can't walk and a coin doesn't fly; you get an error instead
   of a guess.
 - **Sizes:** 128 x 128 is the baseline (a face, a coat's folds and a claw's scales get several

@@ -62,6 +62,18 @@ fn fit(mut fig: figure::Figure, req: &Request, cfg: &Config, timing: &str, size:
     let edge_px = if outlined { 2.0 } else { 1.0 };
     let m = cfg.shapes.margin.max((edge_px + 0.25) / size as f32);
     // twice: motion amplitudes don't scale with the figure, so the second pass settles it
+    // a thing that hangs from an eye (a hook, a jig) is centred on the eye, so a game hangs it by
+    // its middle and turns it around the eye
+    if fig.gait == figure::Gait::Hang {
+        for _ in 0..2 {
+            let eye = fig.pivots[&figure::Group::Body];
+            let (x0, y0, x1, y1) = extent(&fig, req, cfg, timing);
+            let (hw, hh) = ((eye.0 - x0).max(x1 - eye.0), (eye.1 - y0).max(y1 - eye.1));
+            let s = ((0.5 - m) / hw).min((0.5 - m) / hh).min(cfg.shapes.max_grow);
+            fig.transform(s, eye, (0.5, 0.5));
+        }
+        return fig;
+    }
     for _ in 0..2 {
         let (x0, y0, x1, y1) = extent(&fig, req, cfg, timing);
         let s = ((1.0 - 2.0 * m) / (x1 - x0)).min((1.0 - 2.0 * m) / (y1 - y0)).min(cfg.shapes.max_grow);

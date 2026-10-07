@@ -241,6 +241,7 @@ pub struct Shading {
 #[serde(deny_unknown_fields)]
 pub struct Checks {
     pub min_fill: f32,
+    pub min_fill_hanging: f32,
     pub max_fill: f32,
     pub min_contrast: f32,
     pub max_change: f32,

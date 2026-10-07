@@ -43,6 +43,10 @@ pub enum Gait {
     Hop,
     /// no legs: a fish's tail sweeps, its body bends and its fins paddle
     Swim,
+    /// hangs from its eye on a line (a hook, a lure): it can flutter around the eye
+    Hang,
+    /// a person sitting on a seat, seen from the side: breathes, doesn't walk
+    Sit,
 }
 
 #[derive(Clone, Debug)]
@@ -149,7 +153,7 @@ pub fn material_of(s: Subject) -> Material {
         Subject::Ghost | Subject::Human => Material::Cloth,
         Subject::Gem => Material::Stone,
         Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike => Material::Scales,
-        Subject::Hook => Material::Metal,
+        Subject::Hook | Subject::Lure => Material::Metal,
     }
 }
 
@@ -255,7 +259,8 @@ impl<'a> B<'a> {
 }
 
 /// Features that only a person can wear.
-pub const CLOTHES: &[Feature] = &[Feature::Hair, Feature::Coat, Feature::Shirt, Feature::Trousers, Feature::Boots, Feature::Belt, Feature::Claw, Feature::Beanie];
+pub const CLOTHES: &[Feature] = &[Feature::Hair, Feature::Coat, Feature::Shirt, Feature::Trousers, Feature::Boots, Feature::Belt, Feature::Claw, Feature::Beanie,
+    Feature::Parka, Feature::Hood, Feature::Fur, Feature::Mittens, Feature::Kamik, Feature::Sitting];
 
 pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, String> {
     let subj = req.subject.v;
@@ -309,7 +314,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
     }
     // fish and hooks are seen from the side at every realism level: one blueprint, more detail
     // the more realistic it is
-    if crate::fish::is_fish(subj) || subj == Subject::Hook {
+    if crate::fish::is_fish(subj) || matches!(subj, Subject::Hook | Subject::Lure) {
         return crate::fish::build(req, cfg, chosen, pal, why);
     }
     if realism == "realistic" || crate::anatomy::ANATOMY_ONLY.contains(&subj) {
@@ -347,7 +352,7 @@ pub fn build(req: &Request, cfg: &Config, chosen: &Chosen) -> Result<Figure, Str
 
     match subj {
         Subject::Human | Subject::Dog => unreachable!("drawn by anatomy"),
-        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook => unreachable!("drawn by fish.rs"),
+        Subject::Fish | Subject::Perch | Subject::Roach | Subject::Pike | Subject::Hook | Subject::Lure => unreachable!("drawn by fish.rs"),
         Subject::Slime => body!(Shape::Egg { cx, cy: top + 0.62 * h, rx: w / 2.0, ry_top: 0.62 * h, ry_bottom: 0.38 * h }),
         Subject::Ghost => {
             let r = w / 2.0;
