@@ -1,17 +1,44 @@
 # Piksu
 
-Describe a sprite in a sentence and get pixel art and animation frames back. It feels like
-prompting an image model, but it behaves like a compiler: the same sentence and the same
-`rules.toml` always give the same pixels, every choice can be traced to the words that asked
-for it, and a sprite that fails its checks isn't written at all.
+**Describe a sprite in a sentence. Get pixel art and animation frames back.**
 
-![A cat, a dog, a slime and a knight at 128 x 128](examples/showcase/showcase.png)
+It feels like prompting an image model, but it behaves like a compiler:
+- the same sentence and the same `rules.toml` always give the same pixels;
+- every choice can be traced to the words that asked for it;
+- a sprite that fails its checks isn't written at all.
 
-| `a cute orange cat, walking` | `a happy brown dog, walking` | `a cute green slime with big eyes, bouncing` | `a realistic knight, walking` |
-|---|---|---|---|
-| ![cat](examples/showcase/12_cat_walk_128.gif) | ![dog](examples/showcase/13_dog_walk_128.gif) | ![slime](examples/showcase/14_slime_bounce_128.gif) | ![knight](examples/showcase/15_knight_walk_128.gif) |
+No neural network runs at generation time.
 
-All four are 128 x 128, the default size, shown here at 2x.
+![A dog, a knight, an ice fisherman, a hook, a perch, a pike, a roach and a fish, all at 128 x 128](examples/showcase/hero.png)
+
+Every sprite above is Piksu's output for one sentence, the first frame of its animation:
+"a happy brown dog, walking", "a realistic knight, walking", "an ice fisherman, walking",
+"a silver hook", "a perch, swimming", "a realistic pike, swimming", "a roach, swimming" and
+"a fish, swimming". They are 128 x 128, shown at 2x. Nothing is drawn by hand or touched up
+afterwards.
+
+## Animated
+
+| `a happy brown dog, walking` | `a perch, struggling` | `a realistic pike, swimming` |
+|:---:|:---:|:---:|
+| <img src="examples/showcase/13_dog_walk_128/walk.gif" width="220"> | <img src="examples/fish/perch_struggle_128/struggle.gif" width="220"> | <img src="examples/fish/realistic_pike_swim_128/swim.gif" width="220"> |
+| **`an ice fisherman, walking`** | **`a realistic knight, walking`** | **`a roach, swimming`** |
+| <img src="examples/fish/ice_fisherman_walk_128/walk.gif" width="220"> | <img src="examples/showcase/15_knight_walk_128/walk.gif" width="220"> | <img src="examples/fish/roach_swim_128/swim.gif" width="220"> |
+
+Each animation is a seamless loop. A struggling fish swings from its mouth, bends one way and
+then the other, and its tail whips twice per bend. Walking moves the legs, and the frames are
+checked for smooth motion, including the last frame back to the first.
+
+## One word changes the style
+
+![The same thirteen subjects, cartoon above and realistic below](examples/realistic_vs_cartoon.png)
+
+The same thirteen requests: a cat, a frog, a bat, a knight, a robot, a slime, a ghost, a
+mushroom, a coin, a gem, a potion, a star and a heart. Above, `cartoon`; below, `realistic`.
+Realism is one of the decisions the sentence steers. It changes the anatomy, the shading, the
+palette ramps and how much detail is drawn.
+
+## From a sentence to a sprite
 
 ```
 $ piksu "a small green slime with big eyes, bouncing"
@@ -22,8 +49,9 @@ a small green slime with big eyes, bouncing -> out/slime_bounce (12px, 8 frames)
   ...
 ```
 
-Piksu is a [HotMotor](https://github.com/Joosehot/HotMotor) engine, like FeelRight, Senne,
-Aras and Droid. No neural network runs at generation time.
+Piksu is a [HotMotor](https://github.com/Joosehot/HotMotor) engine, like FeelRight, Senne
+and Aras: a closed lexicon, a parser, one rule per decision, beam search with judges, and
+checks that refuse a bad result.
 
 ## The pipeline
 
